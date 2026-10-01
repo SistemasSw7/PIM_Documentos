@@ -1,8 +1,13 @@
-#Sistema De Agendamentos Barbearia Santos
+# Sistema de Agendamentos Barbearia Santos
 
-Este repositório tem como objetivo mostrar o processo de criação do sistema de agendamentos da barbearia santos.
-Sendo divido as etapas dos processos em diretórios.
+Este repositório tem como objetivo mostrar o processo de criação do sistema de agendamentos da Barbearia Santos.
 
-##Diretórios.
+O projeto está dividido em etapas, sendo cada etapa organizada em um diretório específico.
 
-1. [Backolog_produto]
+## Diretórios
+
+1. [Backlog_produto](./Backlog_produto/)
+2. [Sprint_Planing](./Sprints/).
+3. [Diagramas_UML](./Diagramas/).
+4. [Diagramas_BD](./Banco_Dados/).
+
