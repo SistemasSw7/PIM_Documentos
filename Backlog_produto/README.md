@@ -27,8 +27,28 @@ Este diretório serve como forma de documentar detalhadamente sobre o Backlog do
 
 | RF01 | GERENCIAR USUÁRIOS |
 | --- | ---|
-| **T1** | criar Cadastro de usuário (pedir login e senha). |
-|	**T2** | pedir informações básicas para cadastro (nome, telefone, email e data de nascimento) |
-| **T3** | editar informações básicas de usuário. |
-| **T4** | arquivar usuário e informações inativos. |
-|	**T5** | testar armazenagem de dados do Cadastro e login. |
+| **T1** | criar Cadastro de usuário (pedir login, senha,nome, telefone, email e data de nascimento). |
+|	**T2** | editar usuário. |
+| **T3** | Excluir/Arquivar usuário. |
+| **T4** | Autenticar-se no sistema. |
+|	**T5** | Hierarquia de usuário. |
+
+| RF02 | GERENCIAR AGENDA|
+| --- | ---|
+| **T1** | criar horários e datas na agenda. |
+|	**T2** | visualizar horários e datas disponíveis.|
+| **T3** | editar horários. |
+| **T4** |  agendar horários. |
+|	**T5** | desmarcar horário. |
+| **T6** | mostrar serviços disponíveis e informações. |
+
+| RF03 | VISUALIZAR HISTÓRICO DE SERVIÇOS REALIZADOS/AGENDADOS |
+| --- | --- |
+|	**T1** | mostrar informações sobre quais serviços foram realizados. |
+|	**T2 ** |mostrar horário em que foi realizado. |
+|	**T3** | mostrar informações de quem realizou o serviço. |
+| **T4** |mostrar informações sobre o cliente. |
+| **T5** |mostrar status do agendamento (não realizado ou realizado) |
+| **T6** |histórico geral de serviços (Adm, Barbeiro). |
+| **T7** | histórico pessoal (Cliente). |
+
