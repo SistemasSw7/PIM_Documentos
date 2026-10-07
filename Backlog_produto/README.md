@@ -36,7 +36,7 @@ Este diretório serve como forma de documentar detalhadamente sobre o Backlog do
 | RF02 | GERENCIAR AGENDA|
 | --- | ---|
 | **T1** | criar horários e datas na agenda. |
-|	**T2** | visualizar horários e datas disponíveis.                                                   |
+|	**T2** | visualizar horários e datas disponíveis. --------------------------------------------------|
 | **T3** | editar horários. |
 | **T4** |  agendar horários. |
 |	**T5** | desmarcar horário. |
@@ -46,7 +46,7 @@ Este diretório serve como forma de documentar detalhadamente sobre o Backlog do
 | --- | --- |
 |	**T1** | mostrar informações sobre quais serviços foram realizados. |
 |	**T2 ** |mostrar horário em que foi realizado. |
-|	**T3** | mostrar informações de quem realizou o serviço.                                             |
+|	**T3** | mostrar informações de quem realizou o serviço.---------------------------------------------|
 | **T4** |mostrar informações sobre o cliente. |
 | **T5** |mostrar status do agendamento (não realizado ou realizado) |
 | **T6** |histórico geral de serviços (Adm, Barbeiro). |
@@ -56,7 +56,7 @@ Este diretório serve como forma de documentar detalhadamente sobre o Backlog do
 
 | RNF01| SEGURANÇA |
 | --- | ---|
-| **T1** |  O sistema deve possuir uma hierarquia de usuário (Adm, Barbeiro e cliente).                               |
+| **T1** |  O sistema deve possuir uma hierarquia de usuário (Adm, Barbeiro e cliente). ---------------- ------------|
 | **T2** |  O sistema deve exigir login para realizar as ações dentro dele. |
 | **T3** | Caso possua BD criptografar os dados para maior segurança. |
 
@@ -65,11 +65,11 @@ Este diretório serve como forma de documentar detalhadamente sobre o Backlog do
 | --- | --- |
 | **T1** | O sistema deve ter uma interface com informações claras e diretas. |
 | **T2** |  O sistema deve indicar em que parte ele está (login,cadastro, etc). |
-| **T3** | As atualizações da agenda feita pelo adm ou barbeiro devem ser atualizadas para aparecer para os clientes. |
+| **T3** | As atualizações da agenda feita pelo adm ou barbeiro devem ser atualizadas para aparecer para os clientes.--|
 
 | RNF03 | ARMAZENAGEM DE DADOS |
 | --- |--- |
-| **T1** | O sistema deve armazenar os dados dos usuários, serviços e agendamentos em arquivos binários.              |
+| **T1** | O sistema deve armazenar os dados dos usuários, serviços e agendamentos em arquivos binários.---------------|
 | **T2** | Os dados devem permanecer armazenados mesmo após o encerramento do sistema. |
 | **T3** |  O sistema deve permitir a recuperação dos dados armazenados. |
 
