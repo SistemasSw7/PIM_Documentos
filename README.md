@@ -19,6 +19,8 @@ O projeto está dividido em etapas, sendo cada etapa organizada em um diretório
 2. Documentar o planejamento de cada sprint junto de suas tarefas e metas.
 3. Documentar os diagramas da UML
 4. Documentar os diagramas de Banco de dados.
+5. Docomentação do trabalho.
+6. fazer o versionamento do Codigo em C estruturado.
 
 ## Ferramentas e Tecnologias
 
