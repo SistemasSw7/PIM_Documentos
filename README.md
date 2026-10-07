@@ -10,6 +10,8 @@ O projeto está dividido em etapas, sendo cada etapa organizada em um diretório
 2. [Sprint Planning](./Sprints/)
 3. [Diagramas UML](./Diagramas/)
 4. [Diagramas BD](./Banco_Dados/)
+5. [Documentação](./documentação/).
+6. [Codigo C](./Codigo_C/).
 
 ## Objetivos de cada diretório.
 
