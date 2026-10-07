@@ -14,7 +14,7 @@ Este diretório serve como forma de documentar detalhadamente sobre o Backlog do
 | **US06** | Como cliente eu quero poder marcar para cortar meu cabelo com praticidade assim como desmarcar também. |
 | **US07** | Como cliente eu quero poder visualizar meu histórico de agendamentos, como serviços que já foram realizados, assim como os que vão acontecer ainda. |
 
-## BusinesS Rules
+## Business Rules
 
 | ID | BUSINESS RULES |
 | --- | --- |
@@ -51,4 +51,27 @@ Este diretório serve como forma de documentar detalhadamente sobre o Backlog do
 | **T5** |mostrar status do agendamento (não realizado ou realizado) |
 | **T6** |histórico geral de serviços (Adm, Barbeiro). |
 | **T7** | histórico pessoal (Cliente). |
+
+## Requisitos Não Funcionais
+
+| RNF01| SEGURANÇA |
+| --- | ---|
+| **T1** |  O sistema deve possuir uma hierarquia de usuário (Adm, Barbeiro e cliente). |
+| **T2** |  O sistema deve exigir login para realizar as ações dentro dele. |
+| **T3** | Caso possua BD criptografar os dados para maior segurança. |
+
+
+| RNF02 | USABILIDADE |
+| --- | --- |
+| **T1** | O sistema deve ter uma interface com informações claras e diretas. |
+| **T2** |  O sistema deve indicar em que parte ele está (login,cadastro, etc). |
+| **T3** | As atualizações da agenda feita pelo adm ou barbeiro devem ser atualizadas para aparecer para os clientes. |
+
+| RNF03 | ARMAZENAGEM DE DADOS |
+| --- |--- |
+| **T1** | O sistema deve armazenar os dados dos usuários, serviços e agendamentos em arquivos binários. |
+| **T2** | Os dados devem permanecer armazenados mesmo após o encerramento do sistema. |
+| **T3** |  O sistema deve permitir a recuperação dos dados armazenados. |
+
+
 
