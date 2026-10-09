@@ -38,3 +38,18 @@ No final da segunda sprint esperamos ter uma visão macro do que teremos de impl
 | T6 | Criar hierarquia de usuário dono, cliente. US01 | DOING |
 | T7 | Testar cadastro e login. US05 - A fazer. | DOING |
 
+## SPRINT 4.
+
+| TAREFAS | DESCRIÇÃO | CHECK |
+| --- | --- | --- |
+| T1 | Criar tela de cadastro de serviços. US04  | DOING |
+| T2 |  Deve permitir cadastrar nome e valor do serviço. US04| DOING |
+| T3 | Permitir edições em serviços. US04 | DOING |
+| T4 | Exibir serviços cadastrados. US04 | DOING |
+| T5 | Criar agenda. US01 | DOING |
+| T6 | Permitir cadastrar datas e horários. US01 | DOING |
+| T7 |  Permitir editar datas e horários. US01 | DOING |
+| T8 | Exibir horários disponíveis da agenda. US01 | DOING |
+| T9 | Testar cadastros de serviços e agenda. US01/US04 | DOING |
+
+Ao final da Sprint 4, o esperado do sistema é que permita o dono criar e editar a agenda, assim como cadastrar e editar serviços como valores e nomes.
