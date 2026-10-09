@@ -12,3 +12,16 @@ O sprint planing foi dividido em 7 sprints com a duração estimada de 1 semana 
 | T4 | Levantar requisitos não funcionais. | DONE |
 | T5 | Definir as regras de negócio junto do cliente. | DONE |
 | T6 | Criar product backlog. | DONE |
+
+No final da primeira sprint o esperado é que tenhamos as informações necessárias para que possamos começar a construir os diagramas que auxiliarão na fase de implementação.
+
+## SPRINT 2.
+
+| TAREFAS | DESCRIÇÃO | CHECK |
+| --- | --- | --- |
+| T1 | Criação dos diagramas de caso de uso. | DONE
+| T2 | Criação do modelo entidade relacionamento.| DONE
+| T3 | Criação dos diagramas de classe estendido. | DONE
+| T4 | Criação do modelo lógico do Banco de dados. | DONE
+
+No final da segunda sprint esperamos ter uma visão macro do que teremos de implementar para que o sistema rode de acordo com o planejado.
