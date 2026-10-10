@@ -1,1 +1,4 @@
 
+*.dat
+*.exe
+**/output/
