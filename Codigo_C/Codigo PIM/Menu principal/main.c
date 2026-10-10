@@ -1,5 +1,7 @@
 
 #include <stdio.h>
+void cadastrarCliente(void);
+void fazerLogin(void);
 
 int main() {
 
@@ -18,11 +20,11 @@ int main() {
 
         switch (opcao){
             case 1:
-                printf("Cadastro selecionado!\n");
+                cadastrarCliente();
             break;
 
             case 2:
-                printf("Login selecionado!\n");
+                fazerLogin();
                 break;
 
             case 3:
