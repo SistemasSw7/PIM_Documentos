@@ -3,7 +3,7 @@
 #include "../Cliente/Cliente.h"
 
 
-void fazerLogin() {
+int fazerLogin() {
 
 
     char email[100];
@@ -17,7 +17,7 @@ void fazerLogin() {
 
     if (arquivo == NULL) {
         printf("Erro ao abrir o arquivo de clientes!\n");
-        return;
+        return -1;
     }
 
     printf("Arquivo aberto com sucesso!\n");
@@ -35,7 +35,9 @@ void fazerLogin() {
                 loginValido = 1;
 
                 printf("Login realizado com sucesso!\n");
-                break;
+                printf("Bem-vindo, %s!\n", clienteArquivo.nome);
+                fclose(arquivo); 
+                return clienteArquivo.id;
             }
     }
     fclose(arquivo); 
@@ -44,5 +46,5 @@ void fazerLogin() {
         printf("Email ou senha incorretos!\n");
     }
 
-
+    return -1;
 }
