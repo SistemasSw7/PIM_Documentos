@@ -2,6 +2,7 @@
 #include <stdio.h>
 void cadastrarCliente(void);
 int fazerLogin(void);
+void menuCliente(int idCliente);
 
 int main() {
 
@@ -22,12 +23,14 @@ int main() {
         switch (opcao){
             case 1:
                 cadastrarCliente();
-            break;
+                break;
 
             case 2:
                 idCliente = fazerLogin();
                 if (idCliente > 0) {
                     printf("Cliente logado com ID: %d\n", idCliente);
+                    menuCliente(idCliente);
+                    idCliente = -1;
                 }
                 break;
 
