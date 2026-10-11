@@ -1,11 +1,12 @@
 
 #include <stdio.h>
 void cadastrarCliente(void);
-void fazerLogin(void);
+int fazerLogin(void);
 
 int main() {
 
     int opcao = 0;
+    int idCliente = -1;
 
     while (opcao != 3) {
 
@@ -24,7 +25,10 @@ int main() {
             break;
 
             case 2:
-                fazerLogin();
+                idCliente = fazerLogin();
+                if (idCliente > 0) {
+                    printf("Cliente logado com ID: %d\n", idCliente);
+                }
                 break;
 
             case 3:
