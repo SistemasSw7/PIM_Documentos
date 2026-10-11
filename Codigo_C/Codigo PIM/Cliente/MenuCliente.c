@@ -1,52 +1,48 @@
-
 #include <stdio.h>
-void cadastrarCliente(void);
-int fazerLogin(void);
-void menuCliente(int idCliente);
 
-int main() {
+
+void menuCliente(int idCliente) {
 
     int opcao = 0;
-    int idCliente = -1;
 
-    while (opcao != 3) {
+    while(opcao != 4) {
 
-        printf("\n===== SISTEMA BARBEARIA =====\n");
+        printf("\n===== AREA DO CLIENTE =====\n");
+        printf("Cliente ID: %d\n", idCliente);
 
-        printf("1 - Cadastrar cliente\n");
-        printf("2 - Fazer login\n");
-        printf("3 - Sair\n");
+        printf("1 - Agendar horario\n");
+        printf("2 - Meus agendamento\n");
+        printf("3 - Cancelar agendamento\n");
+        printf("4 - Sair da conta\n");
 
         printf("Escolha uma opcao: ");
         scanf("%d", &opcao);
 
-        switch (opcao){
+        switch (opcao) {
+
             case 1:
-                cadastrarCliente();
+                printf("Agendamento selecionado!\n");
                 break;
 
             case 2:
-                idCliente = fazerLogin();
-                if (idCliente > 0) {
-                    printf("Cliente logado com ID: %d\n", idCliente);
-                    menuCliente(idCliente);
-                    idCliente = -1;
-                }
+                printf("Meus agendamentos selecionado!\n");
                 break;
 
             case 3:
+                printf("Cancelar agendamento selecionado!\n");
+                break;
+
+            case 4:
                 printf("Saindo...\n");
                 break;
-        
+            
         default:
-            printf("Opcao invalida!\n");
+            printf("Opcao invalida\n");
+
+
         }
     }
 
-
-
-    return 0;
-
-
+        
 
 }
