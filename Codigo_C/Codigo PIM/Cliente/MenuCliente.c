@@ -1,6 +1,6 @@
 #include <stdio.h>
 
-
+void agendarHorario(int idCliente);
 void menuCliente(int idCliente) {
 
     int opcao = 0;
@@ -21,7 +21,7 @@ void menuCliente(int idCliente) {
         switch (opcao) {
 
             case 1:
-                printf("Agendamento selecionado!\n");
+                agendarHorario(idCliente);
                 break;
 
             case 2:
