@@ -1,1 +1,3 @@
+Este projeto refere-se ao Projeto Integrado Multidisciplinar (PIM II) para a Barbearia Santos, desenvolvido no âmbito do curso de Análise e Desenvolvimento de Sistemas (UNIP).
 
+O trabalho aborda a transição do modelo tradicional de atendimento para uma solução digital integrada, visando otimizar a gestão de clientes e horários. Esta entrega engloba a especificação de requisitos, a modelagem de processos em UML, o projeto do banco de dados relacional e o desenvolvimento do protótipo funcional em linguagem C para ser mais pratica e dinâmica a comunicação e o agendamento entre cliente e barbeiro.
