@@ -12,6 +12,7 @@ O projeto está dividido em etapas, sendo cada etapa organizada em um diretório
 4. [Diagramas BD](./Banco_Dados/)
 5. [Documentação](./documentação/).
 6. [Codigo C](./Codigo_C/).
+7. [Codigo_SQL](./CODIGO_SQL/)
 
 ## Objetivos de cada diretório.
 
