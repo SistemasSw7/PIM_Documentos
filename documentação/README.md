@@ -1,4 +1,6 @@
-# Resumo documentação Barbearia Santos
+# documentação Barbearia Santos
+
+## Resumo da documentação
 
 Este projeto refere-se ao Projeto Integrado Multidisciplinar (PIM II) para a Barbearia Santos, desenvolvido no âmbito do curso de Análise e Desenvolvimento de Sistemas (UNIP).
 
