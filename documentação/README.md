@@ -1,4 +1,4 @@
-# documentação Barbearia Santos
+# Documentação Barbearia Santos
 
 ## Resumo da documentação
 
