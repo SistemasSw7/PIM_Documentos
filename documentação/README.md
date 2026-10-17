@@ -2,7 +2,6 @@
 
 ## Resumo da documentação
 
-# 📄 Documentação Formal do Projeto (PIM II)
 
 Esta documentação constitui o registro formal do Projeto Integrado Multidisciplinar (PIM II), desenvolvido como requisito parcial para o curso Superior de Tecnologia em Análise e Desenvolvimento de Sistemas da Universidade Paulista (UNIP). O documento tem como finalidade consolidar, estruturar e evidenciar a aplicação prática dos conceitos teóricos ministrados ao longo do semestre, integrando disciplinas de Engenharia de Software, Linguagem de Programação, Estrutura de Dados, Modelagem de Banco de Dados e Infraestrutura.
 
