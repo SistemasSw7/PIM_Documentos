@@ -42,15 +42,15 @@ No final da segunda sprint esperamos ter uma visão macro do que teremos de impl
 
 | TAREFAS | DESCRIÇÃO | CHECK |
 | --- | --- | --- |
-| T1 | Criar tela de cadastro de serviços. US04 | DOING |
-| T2 | Deve permitir cadastrar nome e valor do serviço. US04 | DOING |
-| T3 | Permitir edições em serviços. US04 | DOING |
-| T4 | Exibir serviços cadastrados. US04 | DOING |
+| T1 | Criar tela de cadastro de serviços. US04 | DONE |
+| T2 | Deve permitir cadastrar nome e valor do serviço. US04 | DONE |
+| T3 | Permitir edições em serviços. US04 | DONE |
+| T4 | Exibir serviços cadastrados. US04 | DONE |
 | T5 | Criar agenda. US01 | DOING |
-| T6 | Permitir cadastrar datas e horários. US01 | DOING |
-| T7 | Permitir editar datas e horários. US01 | DOING |
-| T8 | Exibir horários disponíveis da agenda. US01 | DOING |
-| T9 | Testar cadastros de serviços e agenda. US01/US04 | DOING |
+| T6 | Permitir cadastrar datas e horários. US01 | DONE  |
+| T7 | Permitir editar datas e horários. US01 | DONE  |
+| T8 | Exibir horários disponíveis da agenda. US01 | DONE |
+| T9 | Testar cadastros de serviços e agenda. US01/US04 | DONE |
 
 Ao final da Sprint 4, o esperado do sistema é que permita o dono criar e editar a agenda, assim como cadastrar e editar serviços como valores e nomes.
 
@@ -58,18 +58,18 @@ Ao final da Sprint 4, o esperado do sistema é que permita o dono criar e editar
 
 | TAREFAS | DESCRIÇÃO | CHECK |
 | --- | --- | --- |
-| T1 | Criar tela de visualização da agenda para o cliente. US06 | TO DO |
-| T2 | Exibir datas disponíveis para agendamento. US06 | TO DO |
-| T3 | Exibir horários disponíveis para cada data. US06 | TO DO |
-| T4 | Ocultar horários que já estejam ocupados. US06 | TO DO |
-| T5 | Permitir que o cliente selecione um serviço. US07. | TO DO |
-| T6 | Permitir que o cliente selecione uma data e horário. US07. | TO DO |
-| T7 | Confirmar o agendamento realizado pelo cliente. US07 | TO DO |
-| T8 | Registrar o agendamento no sistema. US07 | TO DO |
-| T9 | Permitir que o cliente visualize seus agendamentos. US07 | TO DO |
-| T10 | Permitir que o cliente desmarque um horário. US07 | TO DO |
-| T11 | Atualizar a disponibilidade do horário após o agendamento ou cancelamento. US06/US07 | TO DO |
-| T12 | Testar o sistema de agendamento e cancelamento. US06/US07 | TO DO |
+| T1 | Criar tela de visualização da agenda para o cliente. US06 | DOING |
+| T2 | Exibir datas disponíveis para agendamento. US06 | DOING |
+| T3 | Exibir horários disponíveis para cada data. US06 | DOING |
+| T4 | Ocultar horários que já estejam ocupados. US06 | DOING |
+| T5 | Permitir que o cliente selecione um serviço. US07. | DOING |
+| T6 | Permitir que o cliente selecione uma data e horário. US07. | DOING |
+| T7 | Confirmar o agendamento realizado pelo cliente. US07 | DOING |
+| T8 | Registrar o agendamento no sistema. US07 | DOING |
+| T9 | Permitir que o cliente visualize seus agendamentos. US07 | DOING |
+| T10 | Permitir que o cliente desmarque um horário. US07 | DOING |
+| T11 | Atualizar a disponibilidade do horário após o agendamento ou cancelamento. US06/US07 | DOING |
+| T12 | Testar o sistema de agendamento e cancelamento. US06/US07 | DOING |
 
 Ao final da Sprint 5, o esperado é que o cliente consiga visualizar os serviços, datas e horários disponíveis, realizar um agendamento e também visualizar ou desmarcar seus próprios horários. A agenda deverá ser atualizada automaticamente após um agendamento ou cancelamento.
 
