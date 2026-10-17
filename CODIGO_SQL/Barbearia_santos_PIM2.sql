@@ -22,9 +22,10 @@ CREATE TABLE usuarios (
 		)
 	);
 
-CREATE TABLE telefones (
+CREATE TABLE contatos (
 	id_usuario INT REFERENCES usuarios(id_usuarios) PRIMARY KEY,
-	telefones VARCHAR(20) UNIQUE );
+	telefones VARCHAR(20) UNIQUE,
+	Email VARCHAR(250) UNIQUE);
 
 CREATE TABLE servicos(
 	id_servicos INT IDENTITY(1,1) PRIMARY KEY,
@@ -40,4 +41,3 @@ CREATE TABLE agendamentos(
 	hora TIME NOT NULL,
 	status_ VARCHAR(20) NOT NULL );
 
-	
