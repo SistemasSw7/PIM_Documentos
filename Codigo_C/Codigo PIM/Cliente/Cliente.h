@@ -7,6 +7,10 @@ struct Cliente {
     char email[100];
     char telefone[20];
     char senha[50];
+
+    int diaNascimento;
+    int mesNascimento;
+    int anoNascimento;
 };
 
 #endif
