@@ -22,6 +22,7 @@ O projeto está dividido em etapas, sendo cada etapa organizada em um diretório
 4. Documentar os diagramas de Banco de dados.
 5. Docomentação do trabalho.
 6. fazer o versionamento do Codigo em C estruturado.
+7. fazer o versionamsnfo do codigo SQL.
 
 ## Ferramentas e Tecnologias
 
@@ -30,6 +31,7 @@ O projeto está dividido em etapas, sendo cada etapa organizada em um diretório
 - ARQUIVOS BINÁRIOS
 - BR-MODELO
 - ASTAH UML
+- SSMS
 
 ## Observação
 
