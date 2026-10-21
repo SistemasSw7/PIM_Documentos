@@ -34,3 +34,11 @@ O projeto está dividido em etapas, sendo cada etapa organizada em um diretório
 ## Observação
 
 Este repositório tem a finalidade de documentar o progresso do projeto do PIM-2.
+
+## Membros do Pim
+
+Guilherme Augusto Gatto: P.O
+
+Luis Henrique Aquino: Scrum master
+
+Igor Ribeiro de Moraes da Silva: Desenvolvedor
