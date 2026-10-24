@@ -4,6 +4,7 @@
 // Declaracao das funcoes utilizadas no menu administrativo
 void visualizarAgendamentosADM(void); // Exibe todos os agendamentos cadastrados
 void consultarClientesADM(void);      // Consulta os clientes cadastrados
+void gerenciarAgendamentosADM(void);  // Funcao responsavel pelo gerenciamento dos agendamentos
 
 // Funcao responsavel pelo menu do administrador
 void menuADM(void){
@@ -40,8 +41,8 @@ void menuADM(void){
                 break;
 
             case 3:
-                // Funcionalidade de gerenciamento ainda em desenvolvimento
-                printf("Gerenciar agendamentos\n");
+                // Abre o menu de gerenciamento de agendamentos
+                gerenciarAgendamentosADM();
                 break;
 
             case 4:
