@@ -1,5 +1,6 @@
 
 #include <stdio.h>
+#include <io.h>
 
 // Inclui a estrutura que armazena os dados dos agendamentos
 #include "../Agendamento/Agendamento.h"
@@ -136,17 +137,13 @@ void cancelarAgendamentoADM(void){
             }
 
             // Verifica se ja existe um arquivo de backup
-            FILE *backup = fopen("../../Dados/agendamentos_backup_adm.dat", "rb");
-
-            if (backup != NULL){
-                fclose(backup);
-
+            if (_access("../../Dados/agendamentos_backup_adm.dat", 0) == 0) {
                 printf("Ja existe um backup! Verifique a pasta Dados.\n");
 
                 remove("../../Dados/agendamentos_temp_adm.dat");
                 return;
             }
-
+            
             // Renomeia o arquivo original para criar um backup
             if (rename("../../Dados/agendamentos.dat",
                        "../../Dados/agendamentos_backup_adm.dat") != 0){
