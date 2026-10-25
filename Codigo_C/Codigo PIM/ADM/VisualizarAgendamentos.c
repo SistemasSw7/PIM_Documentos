@@ -13,6 +13,9 @@ void visualizarAgendamentosADM(void){
     // Variavel que armazena cada agendamento lido do arquivo
     struct Agendamento agendamento;
 
+    // conta quantos agendamentos foram encontrados
+    int quantidade = 0;
+
     // Exibe o titulo da consulta
     printf("\n===== TODOS OS AGENDAMENTOS =====\n");
 
@@ -32,6 +35,10 @@ void visualizarAgendamentosADM(void){
     // Percorre o arquivo lendo um agendamento por vez
     // O loop termina quando nao consegue ler outro registro completo
     while (fread(&agendamento, sizeof(struct Agendamento), 1, arquivo) == 1){
+    
+        // conta quantos agendamentos foram encontrados
+        quantidade++;
+
 
         // Exibe o ID do agendamento
         printf("ID do agendamento: %d\n", agendamento.id);
@@ -50,6 +57,9 @@ void visualizarAgendamentosADM(void){
 
         // Linha utilizada para separar os agendamentos
         printf("\n------------------------------\n");
+    }
+    if (quantidade == 0){
+        printf("Nenhum agendamento cadastrado!\n");
     }
 
     // Fecha o arquivo apos finalizar a leitura
