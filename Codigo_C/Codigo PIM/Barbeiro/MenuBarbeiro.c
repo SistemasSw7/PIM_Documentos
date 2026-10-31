@@ -1,57 +1,63 @@
 
 #include <stdio.h>
 
-// Funcao responsavel pelo menu do barbeiro
-void menuBarbeiro(void){
+// Declaracao da funcao responsavel por configurar
+// os dias e horarios de trabalho do barbeiro
+void configurarHorarios(void);
 
-    // Variavel que armazena a opcao escolhida pelo barbeiro
+// Funcao responsavel por exibir e controlar o menu do barbeiro
+void menuBarbeiro(void) {
+
+    // Armazena a opcao escolhida pelo barbeiro
     int opcao = 0;
 
-    // Mantem o menu aberto enquanto a opcao for diferente de 4
-    while (opcao != 4){
+    // Mantem o menu funcionando ate o barbeiro escolher sair
+    while (opcao != 4) {
 
-        // Exibe as opcoes disponiveis para o barbeiro
+        // Exibe as funcionalidades disponiveis
         printf("\n===== AREA DO BARBEIRO =====\n");
         printf("1 - Configurar dia e horarios de trabalho\n");
-        printf("2 - configurar intervalos e folgas\n");
+        printf("2 - Configurar intervalos e folgas\n");
         printf("3 - Visualizar agendamentos\n");
         printf("4 - Sair da conta\n");
 
-        // Solicita a opcao desejada pelo barbeiro
+        // Solicita a opcao que o barbeiro deseja acessar
         printf("Escolha uma opcao: ");
         scanf("%d", &opcao);
 
-        // Verifica qual opcao foi escolhida
-        switch (opcao){
+        // Verifica a opcao escolhida e executa a acao correspondente
+        switch (opcao) {
 
             case 1:
-                // Opcao para configurar os dias e horarios de trabalho
-                // Funcionalidade ainda em desenvolvimento
-                printf("Configurar dia e horario de trabalho\n");
+                // Chama a funcao que permite configurar
+                // os dias e horarios de atendimento
+                configurarHorarios();
+
+                // Encerra este caso e retorna ao menu do barbeiro
                 break;
 
             case 2:
-                // Opcao para configurar intervalos e folgas
+                // Opcao destinada a configurar intervalos e folgas
                 // Funcionalidade ainda em desenvolvimento
-                printf("configurar intervalos e folgas\n");
+                printf("Configurar intervalos e folgas\n");
                 break;
 
             case 3:
-                // Opcao para visualizar os agendamentos
-                // Funcionalidade ainda sera conectada
+                // Opcao destinada a consultar os agendamentos
+                // Funcionalidade ainda sera implementada
                 printf("Visualizar agendamentos\n");
                 break;
 
             case 4:
-                // Encerra o menu do barbeiro e retorna ao menu anterior
+                // Encerra o menu do barbeiro
+                // Retorna ao menu principal do sistema
                 printf("Sair da conta do barbeiro...\n");
                 break;
 
             default:
-                // Exibe uma mensagem quando a opcao digitada e invalida
-                printf("opcao invalida!\n");
-
+                // Exibe uma mensagem caso a opcao digitada seja invalida
+                printf("Opcao invalida!\n");
+                break;
         }
     }
-
 }
