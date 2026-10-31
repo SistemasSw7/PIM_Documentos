@@ -3,6 +3,7 @@
 #include <string.h>
 #include "Agendamento.h"
 #include "../Cliente/Cliente.h"
+#include "../Barbeiro/HorarioBarbeiro.h"
 
 // Faz um novo agendamento para o cliente logado.
 void agendarHorario( int idCliente) {
@@ -15,7 +16,7 @@ void agendarHorario( int idCliente) {
     int dataValida = 0;
     int horarioOcupado = 0;
     int maiorId = 0;
-    int horariosOcupados[10] = {0};
+    int horariosOcupados[24] = {0};
     int temHOrarioLivre = 0;
     int tipoAtendimento = 0;
     int encontrouCliente = 0;
@@ -64,7 +65,7 @@ void agendarHorario( int idCliente) {
 
     // Busca o nome do cliente, caso o atendimento seja para ele.
     if (tipoAtendimento == 1) {
-        arquivo = fopen("../../Dados/cliente.dat", "rb");
+        arquivo = fopen("../Dados/cliente.dat", "rb");
         if (arquivo == NULL) {
             printf("Erro ao abrir o arquivo de Cliente!\n");
             return;
@@ -153,23 +154,79 @@ void agendarHorario( int idCliente) {
         }
         }while (dataValida == 0);
 
+        // Guarda a data escolhido pelo cliente
+        struct tm dataEscolhida = {0};
+
+        dataEscolhida.tm_mday = dia;
+        dataEscolhida.tm_mon = mes - 1;
+        dataEscolhida.tm_year = ano - 1900;
+        dataEscolhida.tm_isdst = -1;
+        mktime(&dataEscolhida);
+        int diaSemana = dataEscolhida.tm_wday;
+
+        if(diaSemana == 0){
+            diaSemana = 7;
+        }
+        printf("Dia de semana: %d\n", diaSemana);
+
         // Le os horarios ja reservados e identifica os ocupados.
-        arquivo = fopen("../../Dados/agendamentos.dat", "rb");
+        arquivo = fopen("../Dados/agendamentos.dat", "rb");
         if (arquivo != NULL){
             while (fread(&agendamentoSalvo, sizeof(struct Agendamento), 1, arquivo) == 1) {
-                if (agendamentoSalvo.dia == dia && agendamentoSalvo.mes == mes && agendamentoSalvo.ano == ano && agendamentoSalvo.hora >= 9 && agendamentoSalvo.hora <= 18) {
-                    horariosOcupados[agendamentoSalvo.hora - 9] = 1;
+                if (agendamentoSalvo.dia == dia && agendamentoSalvo.mes == mes && agendamentoSalvo.ano == ano && agendamentoSalvo.hora >= 0 && agendamentoSalvo.hora <= 23) {
+                    horariosOcupados[agendamentoSalvo.hora] = 1;
                 }
             }
             fclose(arquivo);
         }
 
+        // le o horario.dat
+        FILE *arquivoHorario = fopen("horario.dat", "rb");
+        if(arquivoHorario == NULL){
+            printf("Erro ao abrir horarios!\n");
+            return;
+        }
+        struct HorarioBarbeiro horariolido;
+
+        int encontrouHorario = 0;
+        int horaInicio = 0;
+        int horaFim = 0;
+
+        while (fread(&horariolido, sizeof(struct HorarioBarbeiro), 1, arquivoHorario) == 1){
+            
+            if(horariolido.dia == diaSemana){
+                encontrouHorario = 1;
+                horaInicio = horariolido.horaInicio;
+                horaFim = horariolido.horaFim;
+
+                printf("Horario desse dia encontrado!\n");
+
+                printf("Dia: %d\n", horariolido.dia);
+                printf("Inicio: %02d:00\n", horariolido.horaInicio);
+                printf("Termino: %02d:00\n", horariolido.horaFim);
+            }
+        }
+        fclose(arquivoHorario);
+
+        // Verifica se o barbeiro trabalha nesse dia
+        if (encontrouHorario == 0) {
+            printf("O barbeiro nao trabalha nesse dia!\n");
+            return;
+        }
+
+        if(encontrouHorario == 0){
+            printf("O barbeiro nao trabalha nesse dia!\n");
+            return;
+        }
+        
+        
+
         // Mostra os horarios livres e indisponiveis.
         printf("\n===== HORARIOS DA BARBEARIA =====\n");
-        for (int i = 9; i <= 18; i++) {
+        for (int i = horaInicio; i < horaFim; i++) {
             if (ano == anoAtual && mes == mesAtual && dia == diaAtual && i <= horaAtual) {
                 printf("%02d:00 - INDISPONIVEL\n", i);
-            }else if (horariosOcupados[i - 9] == 1){
+            }else if (horariosOcupados[i] == 1){
                 printf("%02d:00 - OCUPADO\n", i);
             }else{
                 printf("%02d:00 - LIVRE\n", i);
@@ -184,20 +241,21 @@ void agendarHorario( int idCliente) {
 
             // Verifica se o horario escolhido pode ser reservado.
             horaValida = 1;
-            printf("Digite o horario do agendamento (9 as 18): ");
+            printf("Escolha um horario entre %02d:00 e %02d:00: ", horaInicio, horaFim - 1);
             if(scanf("%d", &hora) != 1){
                 printf("Digite apenas numeros!\n");
                 int c;
                 while((c = getchar()) != '\n' && c != EOF) {
                 }
                 hora = 0;
-            }
-            if (hora < 9 || hora > 18){
-                printf("Barbearia fechada!\n");
                 horaValida = 0;
             }
-            if(hora >= 9 && hora <= 18) {
-                if (horariosOcupados[hora - 9] == 1){
+            if (hora < horaInicio || hora >= horaFim){
+                printf("Barbearia fechada nesse horario!\n");
+                horaValida = 0;
+            }
+            if(hora >= horaInicio && hora < horaFim) {
+                if (horariosOcupados[hora] == 1){
                     printf("Esse horario ja esta ocupado! Escolha outro.\n");
                     horaValida = 0;
                 }
@@ -209,7 +267,7 @@ void agendarHorario( int idCliente) {
         }while (horaValida == 0);
 
         // Confere se o horario esta livre e calcula o proximo ID.
-        arquivo = fopen("../../Dados/agendamentos.dat", "rb");
+        arquivo = fopen("../Dados/agendamentos.dat", "rb");
         if (arquivo == NULL) {
             printf("Nenhum agendamento salvo ainda.\n");
         }else {
@@ -226,6 +284,8 @@ void agendarHorario( int idCliente) {
             }
             fclose(arquivo);
         }
+        
+
         if (horarioOcupado == 1){
             printf("Nao foi possivel realizar o agendamento!\n");
             return;
@@ -241,7 +301,7 @@ void agendarHorario( int idCliente) {
         novoAgendamento.hora = hora;
 
         // Salva a reserva no arquivo.
-        arquivo = fopen("../../Dados/agendamentos.dat", "ab");
+        arquivo = fopen("../Dados/agendamentos.dat", "ab");
         if (arquivo == NULL) {
             printf("Erro ao abrir o arquivo de agendamentos!\n");
             return;
@@ -268,7 +328,7 @@ void meusAgendamentos(int idCliente) {
     FILE *arquivo;
     struct Agendamento agendamentoSalvo;
     int encontrou = 0;
-    arquivo = fopen("../../Dados/agendamentos.dat", "rb");
+    arquivo = fopen("../Dados/agendamentos.dat", "rb");
     if (arquivo == NULL) {
         printf("Nenhum agendamento encontrado!\n");
         return;
@@ -317,7 +377,7 @@ void cancelarAgendamento(int idCliente) {
         return;
     }
     printf("ID escolhido: %d\n", idAgendamento);
-    arquivo = fopen("../../Dados/agendamentos.dat", "rb");
+    arquivo = fopen("../Dados/agendamentos.dat", "rb");
     if (arquivo == NULL) {
         printf("Nenhum agnedamento encontrado!\n");
         return;
@@ -388,14 +448,14 @@ if (segundosRestantes < 7200) {
         return;
     }
     printf("Processando cancelamento...\n");
-    arquivo = fopen("../../Dados/agendamentos.dat", "rb");
+    arquivo = fopen("../Dados/agendamentos.dat", "rb");
     if(arquivo == NULL) {
         printf("Erro ao abrir os agendamentos!\n");
         return;
     }
 
     // Cria um arquivo temporario para guardar as outras reservas.
-    arquivoTemporario = fopen("../../Dados/agendamentos_temp.dat", "wb");
+    arquivoTemporario = fopen("../Dados/agendamentos_temp.dat", "wb");
     if(arquivoTemporario == NULL) {
         printf("Erro ao criar o arquivo temporario!\n");
         fclose(arquivo);
@@ -409,7 +469,7 @@ if (segundosRestantes < 7200) {
                 printf("Erro ao copiar agendamento!\n");
                 fclose(arquivo);
                 fclose(arquivoTemporario);
-    remove("../../Dados/agendamentos_temp.dat");
+    remove("../Dados/agendamentos_temp.dat");
     return;
             }
         }
@@ -420,7 +480,7 @@ if (segundosRestantes < 7200) {
         printf("Erro ao ler os agendamentos!\n");
         fclose(arquivo);
         fclose(arquivoTemporario);
-    remove("../../Dados/agendamentos_temp.dat");
+    remove("../Dados/agendamentos_temp.dat");
     return;
     }
 
@@ -429,36 +489,36 @@ if (segundosRestantes < 7200) {
     int erroTemporario = fclose(arquivoTemporario);
     if (erroOriginal != 0 || erroTemporario != 0){
         printf("Erro ao fechar os arquivos!\n");
-    remove("../../Dados/agendamentos_temp.dat");
+    remove("../Dados/agendamentos_temp.dat");
         return;
     }
 
     // Verifica se ja existe um backup antigo.
-    FILE *backup = fopen("../../Dados/agendamentos_cancelamento_backup.dat", "rb");
+    FILE *backup = fopen("../Dados/agendamentos_cancelamento_backup.dat", "rb");
     if(backup != NULL){
         fclose(backup);
         printf("Ja existe um backup. Resolva isso antes de cancelar!\n");
-        remove("../../Dados/agendamentos_temp.dat");
+        remove("../Dados/agendamentos_temp.dat");
         return;
     }
 
     // Guarda o arquivo original como backup.
-    if (rename("../../Dados/agendamentos.dat", "../../Dados/agendamentos_cancelamento_backup.dat") != 0){
+    if (rename("../Dados/agendamentos.dat", "../Dados/agendamentos_cancelamento_backup.dat") != 0){
         printf("Erro ao criar backup!\n");
         return;
     }
 
     // Substitui o original pelo arquivo sem a reserva cancelada.
-    if(rename("../../Dados/agendamentos_temp.dat", "../../Dados/agendamentos.dat") != 0){
+    if(rename("../Dados/agendamentos_temp.dat", "../Dados/agendamentos.dat") != 0){
         printf("Erro ao finalizar o cancelamento!\n");
-        if(rename("../../Dados/agendamentos_cancelamento_backup.dat", "../../Dados/agendamentos.dat") != 0){
+        if(rename("../Dados/agendamentos_cancelamento_backup.dat", "../Dados/agendamentos.dat") != 0){
             printf("Erro: restaure o arquivo original pelo backup!\n");
         }
         return;
     }
 
     // Remove o backup apos o cancelamento dar certo.
-    if(remove("../../Dados/agendamentos_cancelamento_backup.dat") != 0){
+    if(remove("../Dados/agendamentos_cancelamento_backup.dat") != 0){
         printf("Aviso: nao foi possivel remover o backup!\n");
     }
     printf("Agendamento cancelado com sucesso!\n");
