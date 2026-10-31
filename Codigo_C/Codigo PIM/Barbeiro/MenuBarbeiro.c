@@ -5,6 +5,9 @@
 // os dias e horarios de trabalho do barbeiro
 void configurarHorarios(void);
 
+//os dias e o horarios de intervalos e folgas
+void configurarIntervalosFolgas(void);
+
 // Funcao responsavel por exibir e controlar o menu do barbeiro
 void menuBarbeiro(void) {
 
@@ -38,8 +41,7 @@ void menuBarbeiro(void) {
 
             case 2:
                 // Opcao destinada a configurar intervalos e folgas
-                // Funcionalidade ainda em desenvolvimento
-                printf("Configurar intervalos e folgas\n");
+                configurarIntervalosFolgas();
                 break;
 
             case 3:
