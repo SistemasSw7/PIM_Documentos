@@ -4,6 +4,8 @@
 // Inclui a estrutura que armazena os dados dos agendamentos
 #include "../Agendamento/Agendamento.h"
 
+#include "../Validacao/ValidarData.h"
+
 // Funcao responsavel por mostrar todos os agendamentos ao ADM
 void visualizarAgendamentosADM(void){
 
@@ -85,6 +87,12 @@ void visualizarAgendamentosPorData(void){
         int c;
         while((c = getchar()) != '\n' && c != EOF){
         }
+        return;
+    }
+
+    //Verifica se a data existe no calendario
+    if(validarDataCalendario(dia, mes, ano) == 0){
+        printf("Data invalida! Digite uma data existente.\n");
         return;
     }
 
