@@ -2,7 +2,7 @@
 #include <stdio.h>
 
 // Declaracao das funcoes utilizadas no menu administrativo
-void visualizarAgendamentosADM(void); // Exibe todos os agendamentos cadastrados
+void menuVisualizarAgendamentos(void); // Abre o menu de consulta de agendamentos
 void consultarClientesADM(void);      // Consulta os clientes cadastrados
 void gerenciarAgendamentosADM(void);  // Funcao responsavel pelo gerenciamento dos agendamentos
 
@@ -31,13 +31,13 @@ void menuADM(void){
         switch (opcao){
 
             case 1:
-                // Chama a funcao que mostra todos os agendamentos
-                visualizarAgendamentosADM();
+                // Abre o submenu compartilhado de agendamentos
+                menuVisualizarAgendamentos();
                 break;
 
             case 2:
-                // Chama a funcao que mostra os clientes cadastrados
-                consultarClientesADM();
+                // Abre o submenu de visualizacao
+                menuVisualizarAgendamentos();
                 break;
 
             case 3:

@@ -8,6 +8,9 @@ void configurarHorarios(void);
 //os dias e o horarios de intervalos e folgas
 void configurarIntervalosFolgas(void);
 
+// Abre o menu de consulta de agendamentos
+void menuVisualizarAgendamentos(void);
+
 // Funcao responsavel por exibir e controlar o menu do barbeiro
 void menuBarbeiro(void) {
 
@@ -45,11 +48,9 @@ void menuBarbeiro(void) {
                 break;
 
             case 3:
-                // Opcao destinada a consultar os agendamentos
-                // Funcionalidade ainda sera implementada
-                printf("Visualizar agendamentos\n");
+                // Abre o submenu de visualizacao de agendamentos
+                menuVisualizarAgendamentos();
                 break;
-
             case 4:
                 // Encerra o menu do barbeiro
                 // Retorna ao menu principal do sistema
