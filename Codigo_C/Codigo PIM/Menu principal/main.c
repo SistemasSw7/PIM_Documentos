@@ -6,7 +6,10 @@ void cadastrarCliente(void);     // Realiza o cadastro de novos clientes
 int fazerLogin(void);            // Realiza o login e retorna o ID do cliente
 void menuCliente(int idCliente); // Abre o menu do cliente logado
 int fazerLoginADM(void);         // Verifica o login do administrador
+int loginADMComTentativas(void); // Permite ate 3 tetativas de login do administrador
 void menuADM(void);              // Abre o menu administrativo
+int fazerLoginBarbeiro(void);    // Verifica o email e a senha do barbeiro
+int loginBarbeiroComTentativas(void); //Permite ate 3 tetativas de login
 void menuBarbeiro(void);         // Abre o menu do barbeiro
 
 // Funcao principal, responsavel por iniciar o sistema
@@ -65,19 +68,22 @@ int main() {
                 break;
 
             case 3:
-                // Abre a area do barbeiro
-                // Permite configurar horarios, intervalos e folgas
-                // O menu ainda nao possui uma autenticacao propria
-                menuBarbeiro();
+                //Permite ate 3 tentativas de login
+                if(loginBarbeiroComTentativas() == 1){
+                    printf("\n== Bem-vindo a area do barbeiro! ==\n");
+
+                    //Abre o menu somente se o login estiver correto
+                    menuBarbeiro();
+                }
                 break;
 
             case 4:
                 // Chama a funcao de login do administrador
                 // O retorno 1 significa que o acesso foi autorizado
-                if (fazerLoginADM() == 1) {
+                if (loginADMComTentativas() == 1) {
 
                     // Exibe uma mensagem de boas-vindas
-                    printf("Bem-vindo a area administrativa!\n");
+                    printf("\n== Bem-vindo a area administrativa! ==\n");
 
                     // Abre o menu com as funcoes administrativas
                     menuADM();

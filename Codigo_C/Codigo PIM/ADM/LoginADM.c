@@ -24,7 +24,7 @@ int fazerLoginADM(void) {
     // as credenciais definidas para teste
     // strcmp retorna 0 quando as strings sao iguais
     // O operador && exige que as duas condicoes sejam verdadeiras
-    if(strcmp(usuario, "admin") == 0 && strcmp(senha, "teste123.") == 0) {
+    if(strcmp(usuario, "Admin@gmail.com") == 0 && strcmp(senha, "teste123.") == 0) {
 
         // Informa que o login foi realizado com sucesso
         printf("Login ADM realizado com sucesso!\n");
@@ -40,4 +40,29 @@ int fazerLoginADM(void) {
         // Retorna 0 para indicar que o acesso foi negado
         return 0;
     }
+}
+
+// Permite ate 3 tentativas de login do administrador
+int loginADMComTentativas(void) {
+
+    int tentativa;
+
+    // Repete o login no maximo 3 vezes
+    for (tentativa = 1; tentativa <= 3; tentativa++) {
+
+        // Verifica o usuario e a senha do ADM
+        if (fazerLoginADM() == 1) {
+            return 1;
+        }
+
+        // Informa quantas tentativas restam
+        if (tentativa < 3) {
+            printf("Tentativas restantes: %d\n", 3 - tentativa);
+        }
+    }
+
+    printf("Limite de tentativas atingido!\n");
+    printf("Voltando ao menu principal...\n");
+
+    return 0;
 }
