@@ -107,3 +107,45 @@ void configurarHorarios(void) {
     printf("Inicio : %02d:00\n", horario.horaInicio);
     printf("Termino: %02d:00\n", horario.horaFim);
 }
+
+//funcao responsavel por visualizar os horarios cadastrados
+void visualizarHorariosBarbeiro(void){
+
+    FILE *arquivo;
+    struct HorarioBarbeiro horario;
+    int quantidade = 0;
+
+    // Nomes dos dias da semana
+    const char *diasSemana[] = {
+        "Segunda-feira", "Terca-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sabado", "Domingo"
+    };
+
+    //Abre o arquivo no modo leitura binaria
+    arquivo = fopen("horario.dat", "rb");
+
+    if (arquivo == NULL){
+        printf("Nenhum horario cadastrado!\n");
+        return;
+    }
+    printf("\n===== HORARIOS DE TRABALHO =====\n");
+
+    //Le os horarios salvos no arquivo
+    while(fread(&horario, sizeof(struct HorarioBarbeiro), 1, arquivo) == 1){
+
+        //Verifica se o dia armazenado e valido
+        if(horario.dia >= 1 && horario.dia <= 7){
+            quantidade++;
+
+            printf("\nDia: %s\n", diasSemana[horario.dia - 1]);
+            printf("Inicio: %02d:00\n", horario.horaInicio);
+            printf("Termino: %02d:00\n", horario.horaFim);
+            printf("---------------------------------------\n");
+        }
+    }
+    if(quantidade == 0){
+        printf("Nenhum horario cadastrado!\n");
+    }
+    fclose(arquivo);
+
+    
+}

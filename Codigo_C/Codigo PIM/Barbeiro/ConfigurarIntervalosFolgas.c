@@ -71,7 +71,7 @@ void configurarIntervalosFolgas(void) {
 
             case 3:
                 // Retorna ao menu principal do barbeiro
-                printf("Voltando ao menu do barbeiro...\n");
+                printf("Voltando ao menu anterior...\n");
                 break;
 
             default:
@@ -461,4 +461,111 @@ void configurarFolgas(void){
     //Confirma o cadastro da folga
     printf("Folga confirmada com sucesso!\n");
 
+}
+
+ // Funcao responsavel por visualizar os intervalos cadastrados
+void visualizarIntervalosBarbeiro(void) {
+
+    // Ponteiro para acessar o arquivo de intervalos
+    FILE *arquivo;
+
+    // Estrutura que armazena cada intervalo lido
+    struct IntervaloBarbeiro intervalo;
+
+    // Conta quantos intervalos foram encontrados
+    int quantidade = 0;
+
+    // Vetor com os dias da semana
+    const char *diasSemana[] = {
+        "Segunda-feira",
+        "Terca-feira",
+        "Quarta-feira",
+        "Quinta-feira",
+        "Sexta-feira",
+        "Sabado",
+        "Domingo"
+    };
+
+    printf("\n===== INTERVALOS CADASTRADOS =====\n");
+
+    // Abre o arquivo em modo de leitura binaria
+    arquivo = fopen("intervalos.dat", "rb");
+
+    // Verifica se o arquivo foi aberto
+    if (arquivo == NULL) {
+        printf("Nenhum intervalo cadastrado!\n");
+        return;
+    }
+
+    // Le os intervalos salvos, um por vez
+    while (fread(&intervalo, sizeof(struct IntervaloBarbeiro),
+                 1, arquivo) == 1) {
+
+        // Verifica se o dia da semana e valido
+        if (intervalo.dia >= 1 && intervalo.dia <= 7) {
+
+            quantidade++;
+
+            printf("\nDia: %s\n", diasSemana[intervalo.dia - 1]);
+            printf("Inicio: %02d:00\n", intervalo.horaInicio);
+            printf("Termino: %02d:00\n", intervalo.horaFim);
+
+            printf("------------------------------\n");
+        }
+    }
+
+    // Verifica se encontrou algum intervalo
+    if (quantidade == 0) {
+        printf("Nenhum intervalo cadastrado!\n");
+    }
+
+    // Fecha o arquivo depois da leitura
+    fclose(arquivo);
+}
+
+
+ // Funcao responsavel por visualizar as folgas cadastradas
+void visualizarFolgasBarbeiro(void) {
+
+    // Ponteiro para acessar o arquivo de folgas
+    FILE *arquivo;
+
+    // Estrutura utilizada para ler cada folga
+    struct FolgaBarbeiro folga;
+
+    // Conta quantas folgas foram encontradas
+    int quantidade = 0;
+
+    printf("\n===== FOLGAS CADASTRADAS =====\n");
+
+    // Abre o arquivo para leitura binaria
+    arquivo = fopen("folgas.dat", "rb");
+
+    // Verifica se o arquivo foi aberto
+    if (arquivo == NULL) {
+        printf("Nenhuma folga cadastrada!\n");
+        return;
+    }
+
+    // Le as folgas cadastradas, uma por vez
+    while (fread(&folga, sizeof(struct FolgaBarbeiro), 1, arquivo) == 1) {
+
+        quantidade++;
+
+        // Mostra a data da folga
+        printf("\nFolga %d\n", quantidade);
+
+        printf("Data: %02d/%02d/%04d\n",
+               folga.dia, folga.mes, folga.ano);
+
+        printf("------------------------------\n");
+    }
+
+    // Verifica se existem folgas cadastradas
+    if (quantidade == 0) {
+        printf("Nenhuma folga cadastrada!\n");
+    }
+
+    // Fecha o arquivo apos a leitura
+    fclose(arquivo);
 }
