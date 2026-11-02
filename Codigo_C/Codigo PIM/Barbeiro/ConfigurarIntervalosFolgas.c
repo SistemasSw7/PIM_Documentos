@@ -7,8 +7,16 @@
 // Importa a estrutura que armazena os intervalos do barbeiro
 #include "IntervaloBarbeiro.h"
 
+// Importa a estrutura que armazena uma data de folga do barbeiro
+#include "FolgaBarbeiro.h"
+
+#include "../Validacao/ValidarData.h"
+
 // Prototipo da funcao responsavel por configurar intervalos
 void configurarIntervalos(void);
+
+// prototipo da funcao responsavel por configurar folgas
+void configurarFolgas(void);
 
 
 // ============================================================
@@ -57,8 +65,8 @@ void configurarIntervalosFolgas(void) {
                 break;
 
             case 2:
-                // Funcionalidade de folgas ainda nao implementada
-                printf("Configurar folgas\n");
+                // Chama a funcao que configura as folgas
+                configurarFolgas();
                 break;
 
             case 3:
@@ -323,4 +331,134 @@ void configurarIntervalos(void) {
 
     // Exibe a confirmacao somente apos salvar os dados
     printf("Intervalo configurado com sucesso!\n");
+}
+
+// Funcao responsavel por cadastrar as folgas do barbeiro
+void configurarFolgas(void){
+
+    //armazena a data escolhada para a folga
+    int dia;
+    int mes;
+    int ano;
+
+    //estrutura que armazena os dados da folga
+    struct FolgaBarbeiro folga;
+
+    // ponteiro utilizado para salvar a folga no arquivo
+    FILE *arquivoFolga;
+
+
+    printf("\n===== CONFIGURAR FOLGAS =====\n");
+
+    // Solicita o dia de folga
+    printf("Digite o dia de folga: ");
+
+    if(scanf("%d", &dia) != 1){
+        printf("Digite apenas numeros!\n");
+
+        // limpa os caracteres invalidos
+        int c;
+        while((c = getchar()) != '\n' && c != EOF){
+        }
+        return;
+    }
+    if (dia < 1 || dia > 31) {
+        printf("Dia invalido!\n");
+        return;
+    }
+    
+    // Solicita o mes da folga
+    printf("Digite o mes da folga: ");
+
+    // Verifica se o mes foi digitado corretamente
+    if(scanf("%d", &mes) != 1){
+        printf("Digite apenas numeros!\n");
+
+        //limpa os caracteres invalidos
+        int c; 
+        while((c = getchar()) != '\n' && c != EOF){
+        }
+        return;
+    }
+
+    //Verifica se o mes esta entre 1 e 12
+    if(mes < 1 || mes > 12){
+        printf("Mes invalido!\n");
+        return;
+    }
+
+    //Solicita o ano da folga
+    printf("Digite o ano da folga: ");
+
+    if(scanf("%d", &ano) != 1){
+        printf("Digite apenas numeros!\n");
+
+        // Limpa os caracteres invalidos
+        int c;
+        while((c = getchar()) != '\n' && c != EOF){
+        }
+        return;
+    }
+
+    //Verifica se o ano informado e valido
+    if(ano < 1900 || ano > 9999){
+        printf("Ano invalido!\n");
+        return;
+    }
+
+    //Verifica se a data de folga e valida
+    if(validarData(dia, mes, ano) == 0){
+        printf("Data de folga invalida!\n");
+        return;
+    }
+    //Abre o arquivo para consultar as folgas cadastradas
+    FILE *arquivoConsulta = fopen("folgas.dat", "rb");
+
+    //Estrutura ultilizada para ler as folgas existentes
+    struct FolgaBarbeiro folgalida;
+
+    //Verifica se o arquivo existe
+    if(arquivoConsulta != NULL){
+        //Percorre todas as folgas cadastradas
+        while(fread(&folgalida, sizeof(struct FolgaBarbeiro), 1, arquivoConsulta) == 1){
+            //Compara a data cadastrada com a data escolhida
+            if(folgalida.dia == dia && folgalida.mes == mes && folgalida.ano == ano){
+                printf("Ja existe uma folga cadastrada nessa data!\n");
+                fclose(arquivoConsulta);
+                return;
+            }
+        }
+        //Fecha o arquivo apos a consulta
+        fclose(arquivoConsulta);
+    }
+
+    // Armazena a data escolhida na estrutura
+    folga.dia = dia;
+    folga.mes = mes;
+    folga.ano = ano;
+
+    // Abre o arquivo para adicionar uma folga
+    arquivoFolga = fopen("folgas.dat", "ab");
+
+    //Verifica se o arquivo foi aberto corretamente
+    if(arquivoFolga == NULL){
+        printf("Erro ao abrir o arquivo de folgas!\n");
+        return;
+    }
+
+    //Salva a folga no arquivo binario
+    if (fwrite(&folga, sizeof(struct FolgaBarbeiro), 1, arquivoFolga) != 1){
+        printf("Erro ao salvar a folga!\n");
+        return;
+    }
+
+    //Fecha o arquivo e verifica se holve erro 
+    if (fclose(arquivoFolga)!= 0){
+        printf("Erro ao finalizar o arquivo de folgas!\n");
+        return;
+    }
+
+    //Confirma o cadastro da folga
+    printf("Folga confirmada com sucesso!\n");
+
 }

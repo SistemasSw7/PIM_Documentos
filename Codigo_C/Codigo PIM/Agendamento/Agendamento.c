@@ -15,6 +15,32 @@
 // Inclui a estrutura dos intervalos cadastrados pelo barbeiro
 #include "../Barbeiro/IntervaloBarbeiro.h"
 
+#include "../Barbeiro/FolgaBarbeiro.h"
+
+// Verifica se o berbeiro possui expediente no dia da semana
+int verificarDiaTrabalho(int diaSemana){
+
+    FILE *arquivoHorario = fopen("horario.dat", "rb");
+
+    //Retorna -1 se nao conseguir abrir o arquivo
+    if(arquivoHorario == NULL){
+        return -1;
+    }
+    struct HorarioBarbeiro horario;
+    int encontrou = 0;
+
+    //Percorre os expedientes cadastrados 
+    while(fread(&horario, sizeof(struct HorarioBarbeiro), 1, arquivoHorario) == 1){
+        if(horario.dia == diaSemana){
+            encontrou = 1;
+            break;
+        }
+    }
+    fclose(arquivoHorario);
+
+    return encontrou;
+}
+
 
 // ============================================================
 // REALIZAR AGENDAMENTO
@@ -63,6 +89,9 @@ void agendarHorario(int idCliente) {
 
     // Indica se o cliente foi encontrado no cadastro
     int encontrouCliente = 0;
+
+    // Indica se a data escolhida e uma folga do barbeiro
+    int encontrouFolga = 0;
 
     // Armazena o nome da pessoa que sera atendida
     char nomeAtendimento[50];
@@ -352,6 +381,68 @@ void agendarHorario(int idCliente) {
             printf("Esse dia ja passou!\n");
             dataValida = 0;
         }
+        //Verifica se as folgas somente se a data informada for valida
+        if(dataValida == 1){
+            
+            //Reinicia a verificacao para a nova data
+            encontrouFolga = 0;
+
+            //Abre o arquivo de folgas
+            FILE *arquivoFolga = fopen("folgas.dat", "rb");
+
+            if(arquivoFolga != NULL){
+                struct FolgaBarbeiro folgalida;
+
+                //Percorre as folgas cadastradas
+                while (fread(&folgalida, sizeof(struct FolgaBarbeiro), 1, arquivoFolga) == 1){
+                    if(folgalida.dia == dia && folgalida.mes == mes && folgalida.ano == ano){
+                        encontrouFolga = 1;
+                        break;
+                    }
+                }
+                fclose(arquivoFolga);
+                
+            }
+
+            //Se encontrou folga, pede outra data
+            if(encontrouFolga == 1){
+                printf("O barbeiro esta de folga nessa data!\n");
+                printf("Por favor, escolha outra data.\n");
+                dataValida = 0;
+            }
+            //Verifica se o berbeiro trabalha no dia escolhido
+            if(dataValida == 1){
+
+                //Monta a data para descobrir o dia da semana
+                struct tm dataVerificacao = {0};
+
+                dataVerificacao.tm_mday = dia;
+                dataVerificacao.tm_mon = mes -1;
+                dataVerificacao.tm_year = ano - 1900;
+                dataVerificacao.tm_isdst = -1;
+
+                mktime(&dataVerificacao);
+
+                //Converte domingo de 0 para 7
+                int diaSemanaVerificacao = dataVerificacao.tm_wday;
+
+                if(diaSemanaVerificacao == 0){
+                    diaSemanaVerificacao = 7;
+                }
+
+                //Converte o expediente cadastrado do barbeiro
+                int resultado = verificarDiaTrabalho(diaSemanaVerificacao);
+
+                if(resultado == -1){
+                    printf("Erro ao consultar os horarios do barbeiro!\n");
+                }
+                if(resultado == 0){
+                    printf("O barbeiro nao trabalha nesse dia!\n");
+                    printf("por favor, escolhe outra data.\n");
+                    dataValida = 0;
+                }
+            }
+        }
 
     } while (dataValida == 0);
 
@@ -384,7 +475,7 @@ void agendarHorario(int idCliente) {
     // Mostra o numero correspondente ao dia da semana
     printf("Dia de semana: %d\n", diaSemana);
 
-
+   
     // ========================================================
     // CONSULTAR HORARIOS JA RESERVADOS
     // ========================================================
