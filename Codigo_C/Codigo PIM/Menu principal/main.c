@@ -33,9 +33,23 @@ int main() {
         printf("4 - Login area do ADM\n");
         printf("5 - Sair\n");
 
-        // Solicita ao usuario a opcao desejada
         printf("Escolha uma opcao: ");
-        scanf("%d", &opcao);
+
+        if (scanf("%d", &opcao) != 1) {
+
+            printf("Digite apenas numeros!\n");
+
+            int c;
+
+            while ((c = getchar()) != '\n' && c != EOF) {
+            }
+
+            if (c == EOF) {
+                break;
+            }
+
+            continue;
+        }
 
         // Verifica a opcao escolhida e executa a funcao correspondente
         switch (opcao) {

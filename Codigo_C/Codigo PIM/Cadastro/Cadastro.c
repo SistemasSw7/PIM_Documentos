@@ -61,7 +61,7 @@ void cadastrarCliente() {
         telefonevalido = 1;
 
         // Percorre cada caractere digitado
-        for (int i = 0; i < strlen(cliente.telefone); i++) {
+        for (size_t i = 0; i < strlen(cliente.telefone); i++) {
 
             // Se encontrar algo diferente de 0 a 9, invalida
             if (cliente.telefone[i] < '0' || cliente.telefone[i] > '9') {
@@ -133,7 +133,7 @@ void cadastrarCliente() {
         temEspecial = 0;
 
         // Percorre os caracteres da senha
-        for (int i = 0; i < strlen(cliente.senha); i++) {
+        for (size_t i = 0; i < strlen(cliente.senha); i++) {
 
             // Verifica se existe pelo menos uma letra maiúscula
             if (cliente.senha[i] >= 'A' && cliente.senha[i] <= 'Z') {
