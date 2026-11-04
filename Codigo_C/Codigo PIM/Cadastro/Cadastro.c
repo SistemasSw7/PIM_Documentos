@@ -26,7 +26,7 @@ void cadastrarCliente() {
     // ==================== GERAR ID ====================
 
     // Abre o arquivo para contar os clientes já cadastrados
-    cadastrocliente = fopen("../../Dados/cliente.dat", "rb");
+    cadastrocliente = fopen("../Dados/cliente.dat", "rb");
 
     if (cadastrocliente != NULL) {
 
@@ -88,7 +88,7 @@ void cadastrarCliente() {
                  strchr(cliente.email, '.') == NULL);
 
         // Abre o arquivo para procurar emails já cadastrados
-        cadastrocliente = fopen("../../Dados/cliente.dat", "rb");
+        cadastrocliente = fopen("../Dados/cliente.dat", "rb");
 
         // 0 = email disponível | 1 = email já cadastrado
         emailExistente = 0;
@@ -168,7 +168,7 @@ void cadastrarCliente() {
 
     // Abre o arquivo em modo de adição binária
     // "ab" adiciona registros sem apagar os anteriores
-    cadastrocliente = fopen("../../Dados/cliente.dat", "ab");
+    cadastrocliente = fopen("../Dados/cliente.dat", "ab");
 
     // Verifica se o arquivo foi aberto corretamente
     if (cadastrocliente == NULL) {

@@ -13,6 +13,10 @@
 void configurarIntervalos(void);
 void configurarFolgas(void);
 
+// Nova funcao: configura um dia fixo de folga por semana
+static void configurarFolgaSemanal(void);
+
+
 // ============================================================
 // MENU DE INTERVALOS E FOLGAS
 // ============================================================
@@ -21,12 +25,14 @@ void configurarIntervalosFolgas(void) {
 
     int opcao = 0;
 
-    while (opcao != 3) {
+    // Mantem o menu aberto ate escolher voltar
+    while (opcao != 4) {
 
         printf("\n===== INTERVALOS E FOLGAS =====\n");
         printf("1 - Configurar intervalos\n");
-        printf("2 - Configurar folgas\n");
-        printf("3 - Voltar\n");
+        printf("2 - Configurar folga por data\n");
+        printf("3 - Configurar folga semanal\n");
+        printf("4 - Voltar\n");
         printf("Escolha uma opcao: ");
 
         if (scanf("%d", &opcao) != 1) {
@@ -48,14 +54,21 @@ void configurarIntervalosFolgas(void) {
         switch (opcao) {
 
             case 1:
+                // Configura o intervalo de um dia
                 configurarIntervalos();
                 break;
 
             case 2:
+                // Mantem a folga por data como ja funcionava
                 configurarFolgas();
                 break;
 
             case 3:
+                // Configura a folga fixa da semana
+                configurarFolgaSemanal();
+                break;
+
+            case 4:
                 printf("Voltando ao menu anterior...\n");
                 break;
 
@@ -65,6 +78,7 @@ void configurarIntervalosFolgas(void) {
         }
     }
 }
+
 
 // ============================================================
 // VERIFICAR CONFLITOS COM AGENDAMENTOS
@@ -140,12 +154,12 @@ static int verificarConflitoAgendamentoIntervalo(
             diaAgendamento = 7;
         }
 
-        // Verifica se o atendimento cai no intervalo
+        // Verifica se o atendimento cai no periodo informado
         if (diaAgendamento == diaSemana &&
             agendamento.hora >= horaInicio &&
             agendamento.hora < horaFim) {
 
-            printf("\nExiste um agendamento nesse intervalo!\n");
+            printf("\nExiste um agendamento nesse periodo!\n");
 
             printf("Data: %02d/%02d/%04d\n",
                    agendamento.dia,
@@ -174,6 +188,7 @@ static int verificarConflitoAgendamentoIntervalo(
 
     return 0;
 }
+
 
 // ============================================================
 // CONFIGURAR INTERVALOS DO BARBEIRO
@@ -497,9 +512,13 @@ void configurarIntervalos(void) {
     printf("Intervalo configurado com sucesso!\n");
 }
 
+
 // ============================================================
-// CONFIGURAR FOLGAS DO BARBEIRO
+// CONFIGURAR FOLGAS POR DATA
 // ============================================================
+
+// Esta funcao foi mantida como ja estava.
+// O arquivo folgas.dat continua separado da folga semanal.
 
 void configurarFolgas(void) {
 
@@ -642,6 +661,7 @@ void configurarFolgas(void) {
     printf("Folga confirmada com sucesso!\n");
 }
 
+
 // ============================================================
 // VISUALIZAR INTERVALOS CADASTRADOS
 // ============================================================
@@ -697,9 +717,13 @@ void visualizarIntervalosBarbeiro(void) {
     fclose(arquivo);
 }
 
+
 // ============================================================
-// VISUALIZAR FOLGAS CADASTRADAS
+// VISUALIZAR FOLGAS CADASTRADAS POR DATA
 // ============================================================
+
+// Continua mostrando apenas as folgas por data.
+// A folga semanal NAO entra nesta lista.
 
 void visualizarFolgasBarbeiro(void) {
 
@@ -739,4 +763,296 @@ void visualizarFolgasBarbeiro(void) {
     }
 
     fclose(arquivo);
+}
+
+
+// ============================================================
+// CONFIGURAR FOLGA SEMANAL FIXA
+// ============================================================
+
+// Esta funcao e nova.
+//
+// Permite escolher um unico dia fixo de folga por semana.
+// Exemplo: domingo, que corresponde ao numero 7.
+//
+// A folga semanal e gravada em folga_semanal.dat.
+// O arquivo folgas.dat nao e modificado.
+
+static void configurarFolgaSemanal(void) {
+
+    int diaSemana;
+    int confirmar;
+    int diaAtual = 0;
+
+    FILE *arquivo;
+
+    const char *nomesDias[] = {
+        "",
+        "Segunda-feira",
+        "Terca-feira",
+        "Quarta-feira",
+        "Quinta-feira",
+        "Sexta-feira",
+        "Sabado",
+        "Domingo"
+    };
+
+    printf("\n===== CONFIGURAR FOLGA SEMANAL =====\n");
+
+    // Exibe todos os dias da semana
+    for (int i = 1; i <= 7; i++) {
+
+        printf("%d - %s\n", i, nomesDias[i]);
+    }
+
+    // Solicita um unico dia para ser folga fixa
+    printf("Escolha o dia de folga semanal: ");
+
+    if (scanf("%d", &diaSemana) != 1) {
+
+        printf("Digite apenas numeros!\n");
+
+        int c;
+        while ((c = getchar()) != '\n' && c != EOF) {
+        }
+
+        return;
+    }
+
+    // Impede dias fora de 1 a 7
+    if (diaSemana < 1 || diaSemana > 7) {
+
+        printf("Dia da semana invalido!\n");
+        return;
+    }
+
+    // ========================================================
+    // CONSULTAR A FOLGA SEMANAL ATUAL
+    // ========================================================
+
+    arquivo = fopen("folga_semanal.dat", "rb");
+
+    if (arquivo != NULL) {
+
+        // Le o dia que ja esta cadastrado
+        if (fread(&diaAtual, sizeof(int), 1, arquivo) != 1) {
+
+            printf("Erro ao ler a folga semanal!\n");
+            fclose(arquivo);
+            return;
+        }
+
+        if (fclose(arquivo) != 0) {
+
+            printf("Erro ao fechar o arquivo de folga semanal!\n");
+            return;
+        }
+
+        // Verifica se o registro e valido
+        if (diaAtual < 1 || diaAtual > 7) {
+
+            printf("Folga semanal salva esta invalida!\n");
+            return;
+        }
+
+        // Impede salvar novamente a mesma configuracao
+        if (diaAtual == diaSemana) {
+
+            printf("%s ja e a folga semanal cadastrada!\n",
+                   nomesDias[diaSemana]);
+
+            return;
+        }
+
+        printf("\nFolga semanal atual: %s\n",
+               nomesDias[diaAtual]);
+
+    } else if (errno != ENOENT) {
+
+        printf("Erro ao consultar a folga semanal!\n");
+        return;
+    }
+
+    // ========================================================
+    // VERIFICAR AGENDAMENTOS FUTUROS
+    // ========================================================
+
+    // Verifica todas as horas do dia escolhido.
+    // Assim, nao permite transformar em folga um dia que
+    // ja tenha atendimentos agendados.
+
+    int conflito = verificarConflitoAgendamentoIntervalo(
+        diaSemana,
+        0,
+        24
+    );
+
+    if (conflito == 1) {
+
+        printf("\nNao foi possivel configurar essa folga!\n");
+
+        printf("Existem agendamentos futuros nesse dia da semana.\n");
+
+        return;
+    }
+
+    if (conflito == -1) {
+
+        printf("Nao foi possivel verificar os agendamentos!\n");
+        return;
+    }
+
+    // ========================================================
+    // CONFIRMAR A FOLGA SEMANAL
+    // ========================================================
+
+    printf("\n===== CONFIRMAR FOLGA SEMANAL =====\n");
+
+    printf("Dia escolhido: %s\n", nomesDias[diaSemana]);
+
+    printf("Esse dia sera folga toda semana.\n");
+
+    printf("1 - Confirmar\n");
+    printf("2 - Cancelar\n");
+    printf("Escolha uma opcao: ");
+
+    if (scanf("%d", &confirmar) != 1) {
+
+        printf("Entrada invalida!\n");
+        return;
+    }
+
+    if (confirmar != 1) {
+
+        printf("Alteracao cancelada!\n");
+        return;
+    }
+
+    // ========================================================
+    // VERIFICAR SE EXISTE BACKUP PENDENTE
+    // ========================================================
+
+    FILE *backup = fopen("folga_semanal_backup.dat", "rb");
+
+    if (backup != NULL) {
+
+        fclose(backup);
+
+        printf("Existe um backup pendente da folga semanal!\n");
+        printf("Verifique o backup antes de continuar.\n");
+
+        return;
+    }
+
+    if (errno != ENOENT) {
+
+        perror("Erro ao verificar backup");
+        return;
+    }
+
+    // ========================================================
+    // CRIAR ARQUIVO TEMPORARIO
+    // ========================================================
+
+    // Grava primeiro em um arquivo temporario,
+    // para nao apagar a configuracao anterior em caso de erro.
+
+    FILE *temporario = fopen("folga_semanal_temp.dat", "wb");
+
+    if (temporario == NULL) {
+
+        printf("Erro ao criar arquivo temporario!\n");
+        return;
+    }
+
+    // Guarda apenas o numero do dia da semana
+    if (fwrite(&diaSemana, sizeof(int), 1, temporario) != 1) {
+
+        printf("Erro ao gravar a folga semanal!\n");
+
+        fclose(temporario);
+        remove("folga_semanal_temp.dat");
+
+        return;
+    }
+
+    if (fclose(temporario) != 0) {
+
+        printf("Erro ao finalizar arquivo temporario!\n");
+
+        remove("folga_semanal_temp.dat");
+        return;
+    }
+
+    // ========================================================
+    // VERIFICAR SE JA EXISTE FOLGA SEMANAL
+    // ========================================================
+
+    int existeOriginal = 0;
+
+    FILE *original = fopen("folga_semanal.dat", "rb");
+
+    if (original != NULL) {
+
+        existeOriginal = 1;
+        fclose(original);
+
+    } else if (errno != ENOENT) {
+
+        printf("Erro ao verificar a folga semanal anterior!\n");
+
+        remove("folga_semanal_temp.dat");
+        return;
+    }
+
+    // ========================================================
+    // PRESERVAR A FOLGA SEMANAL ANTERIOR
+    // ========================================================
+
+    if (existeOriginal == 1) {
+
+        if (rename("folga_semanal.dat",
+                   "folga_semanal_backup.dat") != 0) {
+
+            printf("Erro ao criar backup da folga semanal!\n");
+
+            remove("folga_semanal_temp.dat");
+            return;
+        }
+    }
+
+    // ========================================================
+    // SALVAR NOVA FOLGA SEMANAL
+    // ========================================================
+
+    if (rename("folga_semanal_temp.dat",
+               "folga_semanal.dat") != 0) {
+
+        printf("Erro ao salvar a folga semanal!\n");
+
+        // Tenta restaurar a configuracao anterior
+        if (existeOriginal == 1) {
+
+            if (rename("folga_semanal_backup.dat",
+                       "folga_semanal.dat") != 0) {
+
+                printf("ATENCAO: restaure a folga pelo backup!\n");
+            }
+        }
+
+        return;
+    }
+
+    // Remove o backup apos salvar com sucesso
+    if (existeOriginal == 1) {
+
+        if (remove("folga_semanal_backup.dat") != 0) {
+
+            printf("Aviso: nao foi possivel remover o backup!\n");
+        }
+    }
+
+    printf("\nFolga semanal configurada com sucesso!\n");
+
+    printf("Dia: %s\n", nomesDias[diaSemana]);
 }

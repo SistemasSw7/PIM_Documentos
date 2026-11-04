@@ -2,40 +2,123 @@
 #include <stdio.h>
 #include <time.h>
 #include <string.h>
+#include <errno.h>
 
-// Inclui a estrutura e as declaracoes utilizadas nos agendamentos
+// Estruturas e declaracoes dos agendamentos
 #include "Agendamento.h"
 
-// Inclui a estrutura que armazena os dados dos clientes
+// Dados dos clientes
 #include "../Cliente/Cliente.h"
 
-// Inclui a estrutura dos horarios de trabalho do barbeiro
+// Horarios de trabalho do barbeiro
 #include "../Barbeiro/HorarioBarbeiro.h"
 
-// Inclui a estrutura dos intervalos cadastrados pelo barbeiro
+// Intervalos do barbeiro
 #include "../Barbeiro/IntervaloBarbeiro.h"
 
+// Folgas cadastradas por data
 #include "../Barbeiro/FolgaBarbeiro.h"
 
-// Verifica se o berbeiro possui expediente no dia da semana
-int verificarDiaTrabalho(int diaSemana){
+// ============================================================
+// VERIFICAR FOLGA SEMANAL FIXA
+// ============================================================
+
+// Retornos:
+// 1 = barbeiro esta de folga nesse dia
+// 0 = nao existe folga semanal nesse dia
+// -1 = erro ao consultar o arquivo
+//
+// Dias da semana:
+// 1 - Segunda
+// 2 - Terca
+// 3 - Quarta
+// 4 - Quinta
+// 5 - Sexta
+// 6 - Sabado
+// 7 - Domingo
+
+static int verificarFolgaSemanal(int diaSemana) {
+
+    FILE *arquivoFolga = fopen("folga_semanal.dat", "rb");
+
+    // Se o arquivo nao existe, nao ha folga semanal fixa
+    if (arquivoFolga == NULL) {
+
+        if (errno == ENOENT) {
+            return 0;
+        }
+
+        perror("Erro ao abrir a folga semanal");
+        return -1;
+    }
+
+    // Armazena o dia salvo pelo barbeiro
+    int diaFolga = 0;
+
+    // Le o inteiro salvo no arquivo binario
+    int leituraOk = fread(
+        &diaFolga,
+        sizeof(int),
+        1,
+        arquivoFolga
+    ) == 1;
+
+    int erroLeitura = ferror(arquivoFolga);
+
+    int erroFechamento = fclose(arquivoFolga) != 0;
+
+    // Confere se o arquivo foi lido corretamente
+    if (!leituraOk ||
+        erroLeitura ||
+        erroFechamento ||
+        diaFolga < 1 ||
+        diaFolga > 7) {
+
+        printf("Erro ao consultar a folga semanal cadastrada!\n");
+        return -1;
+    }
+
+    // Compara o dia escolhido com a folga semanal
+    if (diaSemana == diaFolga) {
+        return 1;
+    }
+
+    return 0;
+}
+
+
+// ============================================================
+// VERIFICAR DIA DE TRABALHO
+// ============================================================
+
+// Verifica se o barbeiro possui expediente no dia da semana
+
+int verificarDiaTrabalho(int diaSemana) {
 
     FILE *arquivoHorario = fopen("horario.dat", "rb");
 
-    //Retorna -1 se nao conseguir abrir o arquivo
-    if(arquivoHorario == NULL){
+    // Retorna -1 se nao conseguir abrir o arquivo
+    if (arquivoHorario == NULL) {
         return -1;
     }
+
     struct HorarioBarbeiro horario;
+
     int encontrou = 0;
 
-    //Percorre os expedientes cadastrados 
-    while(fread(&horario, sizeof(struct HorarioBarbeiro), 1, arquivoHorario) == 1){
-        if(horario.dia == diaSemana){
+    // Percorre os expedientes cadastrados
+    while (fread(&horario,
+                 sizeof(struct HorarioBarbeiro),
+                 1,
+                 arquivoHorario) == 1) {
+
+        if (horario.dia == diaSemana) {
+
             encontrou = 1;
             break;
         }
     }
+
     fclose(arquivoHorario);
 
     return encontrou;
@@ -46,98 +129,84 @@ int verificarDiaTrabalho(int diaSemana){
 // REALIZAR AGENDAMENTO
 // ============================================================
 
-// Faz um novo agendamento para o cliente logado.
-// Recebe o ID do cliente para identificar o responsavel.
+// Faz um novo agendamento para o cliente logado
+// Recebe o ID do cliente responsavel
+
 void agendarHorario(int idCliente) {
 
-    // Variaveis que armazenam a data escolhida pelo cliente
+    // Data escolhida pelo cliente
     int dia;
     int mes;
     int ano;
 
-    // Indica se o ano escolhido e bissexto
+    // Ano bissexto
     int bissexto;
 
-    // Armazena o horario escolhido para o atendimento
+    // Horario do atendimento
     int hora;
 
-    // Controla se a hora escolhida pode ser utilizada
+    // Validacoes
     int horaValida;
-
-    // Controla a validade da data informada
     int dataValida = 0;
 
-    // Indica se o horario ja foi reservado
+    // Horarios ocupados
     int horarioOcupado = 0;
 
-    // Guarda o maior ID de agendamento encontrado
+    // Maior ID de agendamento
     int maiorId = 0;
 
-    // Cada posicao representa uma hora do dia
-    // 0 = horario nao ocupado | 1 = horario ocupado
+    // 0 = livre | 1 = ocupado
     int horariosOcupados[24] = {0};
 
-    // Identifica os horarios bloqueados por intervalos
-    // 0 = fora do intervalo | 1 = dentro do intervalo
+    // 0 = fora do intervalo | 1 = intervalo
     int horariosIntervalo[24] = {0};
 
-    // Indica se existe pelo menos um horario livre
+    // Verifica disponibilidade de horarios
     int temHOrarioLivre = 0;
 
-    // Define para quem sera realizado o atendimento
+    // Tipo de atendimento
     int tipoAtendimento = 0;
 
-    // Indica se o cliente foi encontrado no cadastro
+    // Cliente encontrado
     int encontrouCliente = 0;
 
-    // Indica se a data escolhida e uma folga do barbeiro
+    // Folga cadastrada por data
     int encontrouFolga = 0;
 
-    // Armazena o nome da pessoa que sera atendida
+    // Nome de quem sera atendido
     char nomeAtendimento[50];
 
-    // Ponteiro utilizado para abrir os arquivos binarios
+    // Ponteiro para arquivos
     FILE *arquivo;
 
-    // Estrutura utilizada para armazenar a nova reserva
+    // Estruturas
     struct Agendamento novoAgendamento;
-
-    // Estrutura utilizada para ler as reservas existentes
     struct Agendamento agendamentoSalvo;
-
-    // Estrutura utilizada para consultar os dados do cliente
     struct Cliente clienteEncontrado;
 
 
     // ========================================================
-    // CONSULTAR A DATA E A HORA ATUAIS
+    // CONSULTAR DATA E HORA ATUAIS
     // ========================================================
 
-    // Obtem o instante atual do sistema
     time_t agora = time(NULL);
 
-    // Converte o instante atual para a data e hora locais
     struct tm *dataAtual = localtime(&agora);
 
-    // Verifica se a consulta da data atual falhou
     if (dataAtual == NULL) {
+
         printf("Erro ao obter a data atual!\n");
         return;
     }
 
-    // Extrai o ano, dia, mes e hora atuais
     int anoAtual = dataAtual->tm_year + 1900;
     int diaAtual = dataAtual->tm_mday;
     int mesAtual = dataAtual->tm_mon + 1;
     int horaAtual = dataAtual->tm_hour;
 
-    // Mostra a data atual para o cliente
     printf("Data atual: %02d/%02d/%d\n",
-           dataAtual->tm_mday,
-           dataAtual->tm_mon + 1,
-           dataAtual->tm_year + 1900);
+           diaAtual, mesAtual, anoAtual);
 
-    // Exibe a identificacao da tela de agendamento
     printf("\n===== AGENDAR HORARIO =====\n");
     printf("Cliente ID: %d\n", idCliente);
 
@@ -146,7 +215,6 @@ void agendarHorario(int idCliente) {
     // ESCOLHER QUEM RECEBERA O ATENDIMENTO
     // ========================================================
 
-    // Repete a pergunta ate receber uma opcao valida
     do {
 
         printf("\nPara quem sera o atendimento?\n");
@@ -154,21 +222,20 @@ void agendarHorario(int idCliente) {
         printf("2 - Para outra pessoa\n");
         printf("Escolha uma opcao: ");
 
-        // Verifica se o usuario digitou um numero inteiro
         if (scanf("%d", &tipoAtendimento) != 1) {
+
             printf("Digite apenas numeros!\n");
 
-            // Descarta os caracteres invalidos da entrada
             int c;
+
             while ((c = getchar()) != '\n' && c != EOF) {
             }
 
-            // Reinicia a opcao quando a leitura falha
             tipoAtendimento = 0;
         }
 
-        // Informa quando a opcao digitada nao existe
         if (tipoAtendimento != 1 && tipoAtendimento != 2) {
+
             printf("Opcao invalida!\n");
         }
 
@@ -179,12 +246,10 @@ void agendarHorario(int idCliente) {
     // ATENDIMENTO PARA OUTRA PESSOA
     // ========================================================
 
-    // Permite informar o nome de outra pessoa
     if (tipoAtendimento == 2) {
 
         printf("Digite o nome e o sobre nome da pessoa: ");
 
-        // Le o nome com espacos, respeitando o tamanho do vetor
         scanf(" %49[^\n]", nomeAtendimento);
     }
 
@@ -193,45 +258,37 @@ void agendarHorario(int idCliente) {
     // ATENDIMENTO PARA O PROPRIO CLIENTE
     // ========================================================
 
-    // Busca o nome do cliente, caso o atendimento seja para ele
     if (tipoAtendimento == 1) {
 
-        // Abre o arquivo com os clientes cadastrados
         arquivo = fopen("../Dados/cliente.dat", "rb");
 
-        // Verifica se o arquivo foi aberto
         if (arquivo == NULL) {
+
             printf("Erro ao abrir o arquivo de Cliente!\n");
             return;
         }
 
-        // Le os clientes cadastrados, um registro por vez
         while (fread(&clienteEncontrado,
-                     sizeof(struct Cliente), 1, arquivo) == 1) {
+                     sizeof(struct Cliente),
+                     1,
+                     arquivo) == 1) {
 
-            // Compara o ID do registro com o ID do cliente logado
             if (clienteEncontrado.id == idCliente) {
 
-                // Copia o nome cadastrado para o atendimento
                 strcpy(nomeAtendimento, clienteEncontrado.nome);
 
-                // Mostra o nome encontrado
                 printf("Cliente encontrado: %s\n",
                        clienteEncontrado.nome);
 
-                // Indica que o cliente foi encontrado
                 encontrouCliente = 1;
-
-                // Interrompe a busca apos encontrar o cliente
                 break;
             }
         }
 
-        // Fecha o arquivo depois da consulta
         fclose(arquivo);
 
-        // Impede continuar se o cliente nao foi encontrado
         if (encontrouCliente == 0) {
+
             printf("Cliente nao encontrado!\n");
             return;
         }
@@ -244,7 +301,6 @@ void agendarHorario(int idCliente) {
 
     do {
 
-        // Inicialmente considera a data valida
         dataValida = 1;
 
 
@@ -256,20 +312,20 @@ void agendarHorario(int idCliente) {
 
             printf("Digite o dia do agendamento: ");
 
-            // Verifica se o valor digitado e um numero
             if (scanf("%d", &dia) != 1) {
+
                 printf("Digite apenas numeros!\n");
 
-                // Limpa os caracteres invalidos
                 int c;
+
                 while ((c = getchar()) != '\n' && c != EOF) {
                 }
 
                 dia = 0;
             }
 
-            // Impede dias menores que 1 ou maiores que 31
             if (dia < 1 || dia > 31) {
+
                 printf("Dia invalido!\n");
             }
 
@@ -284,19 +340,20 @@ void agendarHorario(int idCliente) {
 
             printf("Digite o mes do agendamento: ");
 
-            // Verifica se a entrada e numerica
             if (scanf("%d", &mes) != 1) {
+
                 printf("Digite apenas numeros!\n");
 
                 int c;
+
                 while ((c = getchar()) != '\n' && c != EOF) {
                 }
 
                 mes = 0;
             }
 
-            // Impede meses fora do intervalo de 1 a 12
             if (mes < 1 || mes > 12) {
+
                 printf("Mes invalido!\n");
             }
 
@@ -311,19 +368,20 @@ void agendarHorario(int idCliente) {
 
             printf("Digite o ano do agendamento: ");
 
-            // Verifica se o ano informado e numerico
             if (scanf("%d", &ano) != 1) {
+
                 printf("Digite apenas numeros!\n");
 
                 int c;
+
                 while ((c = getchar()) != '\n' && c != EOF) {
                 }
 
                 ano = 0;
             }
 
-            // Impede escolher um ano anterior ao ano atual
             if (ano < anoAtual) {
+
                 printf("Ano invalido!\n");
             }
 
@@ -331,14 +389,13 @@ void agendarHorario(int idCliente) {
 
 
         // ====================================================
-        // VERIFICAR ANO BISSEXTO E DIAS DOS MESES
+        // VERIFICAR ANO BISSEXTO
         // ====================================================
 
-        // Identifica anos bissextos pelas regras do calendario
         bissexto = (ano % 4 == 0 && ano % 100 != 0)
                    || ano % 400 == 0;
 
-        // Impede dia 31 nos meses que possuem apenas 30 dias
+        // Meses com apenas 30 dias
         if (dia == 31 &&
             (mes == 4 || mes == 6 || mes == 9 || mes == 11)) {
 
@@ -346,17 +403,17 @@ void agendarHorario(int idCliente) {
             dataValida = 0;
         }
 
-        // Aplica as regras especificas de fevereiro
+        // Fevereiro
         if (mes == 2) {
 
-            // Fevereiro nunca possui mais de 29 dias
             if (dia > 29) {
+
                 printf("Data invalida!\n");
                 dataValida = 0;
             }
 
-            // Dia 29 so existe em fevereiro de ano bissexto
             if (dia == 29 && bissexto == 0) {
+
                 printf("Data invalida!\n");
                 dataValida = 0;
             }
@@ -367,13 +424,12 @@ void agendarHorario(int idCliente) {
         // IMPEDIR AGENDAMENTOS EM DATAS PASSADAS
         // ====================================================
 
-        // Verifica se o mes informado ja passou neste ano
         if (ano == anoAtual && mes < mesAtual) {
+
             printf("Essa data ja passou!\n");
             dataValida = 0;
         }
 
-        // Verifica se o dia ja passou no mes atual
         if (ano == anoAtual &&
             mes == mesAtual &&
             dia < diaAtual) {
@@ -381,65 +437,123 @@ void agendarHorario(int idCliente) {
             printf("Esse dia ja passou!\n");
             dataValida = 0;
         }
-        //Verifica se as folgas somente se a data informada for valida
-        if(dataValida == 1){
-            
-            //Reinicia a verificacao para a nova data
+
+
+        // ====================================================
+        // VERIFICAR FOLGAS CADASTRADAS POR DATA
+        // ====================================================
+
+        if (dataValida == 1) {
+
             encontrouFolga = 0;
 
-            //Abre o arquivo de folgas
             FILE *arquivoFolga = fopen("folgas.dat", "rb");
 
-            if(arquivoFolga != NULL){
+            if (arquivoFolga != NULL) {
+
                 struct FolgaBarbeiro folgalida;
 
-                //Percorre as folgas cadastradas
-                while (fread(&folgalida, sizeof(struct FolgaBarbeiro), 1, arquivoFolga) == 1){
-                    if(folgalida.dia == dia && folgalida.mes == mes && folgalida.ano == ano){
+                while (fread(&folgalida,
+                             sizeof(struct FolgaBarbeiro),
+                             1,
+                             arquivoFolga) == 1) {
+
+                    if (folgalida.dia == dia &&
+                        folgalida.mes == mes &&
+                        folgalida.ano == ano) {
+
                         encontrouFolga = 1;
                         break;
                     }
                 }
+
                 fclose(arquivoFolga);
-                
             }
 
-            //Se encontrou folga, pede outra data
-            if(encontrouFolga == 1){
-                printf("O barbeiro esta de folga nessa data!\n");
+            if (encontrouFolga == 1) {
+
+                printf("\nO barbeiro esta de folga nessa data!\n");
                 printf("Por favor, escolha outra data.\n");
+
                 dataValida = 0;
             }
-            //Verifica se o berbeiro trabalha no dia escolhido
-            if(dataValida == 1){
 
-                //Monta a data para descobrir o dia da semana
+
+            // ====================================================
+            // VERIFICAR FOLGA SEMANAL E DIA DE TRABALHO
+            // ====================================================
+
+            if (dataValida == 1) {
+
+                // Monta a data escolhida pelo cliente
                 struct tm dataVerificacao = {0};
 
                 dataVerificacao.tm_mday = dia;
-                dataVerificacao.tm_mon = mes -1;
+                dataVerificacao.tm_mon = mes - 1;
                 dataVerificacao.tm_year = ano - 1900;
                 dataVerificacao.tm_isdst = -1;
 
-                mktime(&dataVerificacao);
+                // Calcula o dia da semana
+                if (mktime(&dataVerificacao) == (time_t)-1) {
 
-                //Converte domingo de 0 para 7
-                int diaSemanaVerificacao = dataVerificacao.tm_wday;
-
-                if(diaSemanaVerificacao == 0){
-                    diaSemanaVerificacao = 7;
-                }
-
-                //Converte o expediente cadastrado do barbeiro
-                int resultado = verificarDiaTrabalho(diaSemanaVerificacao);
-
-                if(resultado == -1){
-                    printf("Erro ao consultar os horarios do barbeiro!\n");
-                }
-                if(resultado == 0){
-                    printf("O barbeiro nao trabalha nesse dia!\n");
-                    printf("por favor, escolhe outra data.\n");
+                    printf("Erro ao verificar a data escolhida!\n");
                     dataValida = 0;
+
+                } else {
+
+                    int diaSemanaVerificacao =
+                        dataVerificacao.tm_wday;
+
+                    // Converte domingo de 0 para 7
+                    if (diaSemanaVerificacao == 0) {
+
+                        diaSemanaVerificacao = 7;
+                    }
+
+
+                    // ============================================
+                    // CONSULTAR FOLGA SEMANAL FIXA
+                    // ============================================
+
+                    int resultadoFolgaSemanal =
+                        verificarFolgaSemanal(diaSemanaVerificacao);
+
+                    if (resultadoFolgaSemanal == 1) {
+
+                        printf("\nO barbeiro esta de FOLGA SEMANAL nesse dia!\n");
+                        printf("Por favor, escolha outra data.\n");
+
+                        dataValida = 0;
+
+                    } else if (resultadoFolgaSemanal == -1) {
+
+                        // Erro na leitura da folga semanal
+                        dataValida = 0;
+                    }
+
+
+                    // ============================================
+                    // VERIFICAR EXPEDIENTE DO BARBEIRO
+                    // ============================================
+
+                    if (dataValida == 1) {
+
+                        int resultado =
+                            verificarDiaTrabalho(diaSemanaVerificacao);
+
+                        if (resultado == -1) {
+
+                            printf("Erro ao consultar os horarios do barbeiro!\n");
+                            dataValida = 0;
+
+                        } else if (resultado == 0) {
+
+                            printf("O barbeiro nao trabalha nesse dia!\n");
+                            printf("Por favor, escolha outra data.\n");
+
+                            dataValida = 0;
+                        }
+                    }
                 }
             }
         }
@@ -451,58 +565,47 @@ void agendarHorario(int idCliente) {
     // DESCOBRIR O DIA DA SEMANA
     // ========================================================
 
-    // Guarda a data escolhida pelo cliente
     struct tm dataEscolhida = {0};
 
-    // Preenche a estrutura com a data informada
     dataEscolhida.tm_mday = dia;
     dataEscolhida.tm_mon = mes - 1;
     dataEscolhida.tm_year = ano - 1900;
     dataEscolhida.tm_isdst = -1;
 
-    // Calcula a data e preenche o dia da semana
     mktime(&dataEscolhida);
 
-    // tm_wday retorna 0 para domingo, 1 para segunda etc.
     int diaSemana = dataEscolhida.tm_wday;
 
-    // Converte domingo de 0 para 7
-    // Segue o padrao utilizado nos horarios do barbeiro
     if (diaSemana == 0) {
         diaSemana = 7;
     }
 
-    // Mostra o numero correspondente ao dia da semana
     printf("Dia de semana: %d\n", diaSemana);
 
-   
+
     // ========================================================
     // CONSULTAR HORARIOS JA RESERVADOS
     // ========================================================
 
-    // Le os horarios ja reservados e identifica os ocupados
     arquivo = fopen("../Dados/agendamentos.dat", "rb");
 
-    // Se o arquivo existir, percorre as reservas salvas
     if (arquivo != NULL) {
 
         while (fread(&agendamentoSalvo,
-                     sizeof(struct Agendamento), 1, arquivo) == 1) {
+                     sizeof(struct Agendamento),
+                     1,
+                     arquivo) == 1) {
 
-            // Considera apenas reservas feitas para a data escolhida
-            // Tambem verifica se a hora esta entre 0 e 23
             if (agendamentoSalvo.dia == dia &&
                 agendamentoSalvo.mes == mes &&
                 agendamentoSalvo.ano == ano &&
                 agendamentoSalvo.hora >= 0 &&
                 agendamentoSalvo.hora <= 23) {
 
-                // Marca a hora encontrada como ocupada
                 horariosOcupados[agendamentoSalvo.hora] = 1;
             }
         }
 
-        // Fecha o arquivo de reservas
         fclose(arquivo);
     }
 
@@ -511,102 +614,89 @@ void agendarHorario(int idCliente) {
     // CONSULTAR O EXPEDIENTE DO BARBEIRO
     // ========================================================
 
-    // Abre o arquivo que guarda os dias e horarios de trabalho
     FILE *arquivoHorario = fopen("horario.dat", "rb");
 
-    // Verifica se o arquivo foi aberto corretamente
     if (arquivoHorario == NULL) {
+
         printf("Erro ao abrir horarios!\n");
         return;
     }
 
-    // Estrutura utilizada para ler cada expediente cadastrado
     struct HorarioBarbeiro horariolido;
 
-    // Controla se existe expediente no dia escolhido
     int encontrouHorario = 0;
 
-    // Guarda o inicio e o fim do expediente encontrado
     int horaInicio = 0;
     int horaFim = 0;
 
-    // Percorre os registros de expediente do barbeiro
     while (fread(&horariolido,
                  sizeof(struct HorarioBarbeiro),
-                 1, arquivoHorario) == 1) {
+                 1,
+                 arquivoHorario) == 1) {
 
-        // Verifica se o registro pertence ao dia escolhido
         if (horariolido.dia == diaSemana) {
 
-            // Confirma que encontrou expediente para o dia
             encontrouHorario = 1;
 
-            // Guarda os limites do horario de trabalho
             horaInicio = horariolido.horaInicio;
             horaFim = horariolido.horaFim;
 
-            // Mostra o expediente encontrado
             printf("Horario desse dia encontrado!\n");
 
             printf("Dia: %d\n", horariolido.dia);
-            printf("Inicio: %02d:00\n", horariolido.horaInicio);
-            printf("Termino: %02d:00\n", horariolido.horaFim);
+
+            printf("Inicio: %02d:00\n",
+                   horariolido.horaInicio);
+
+            printf("Termino: %02d:00\n",
+                   horariolido.horaFim);
         }
     }
 
-    // Fecha o arquivo depois da leitura dos expedientes
     fclose(arquivoHorario);
 
-    // Verifica se o barbeiro trabalha nesse dia
     if (encontrouHorario == 0) {
+
         printf("O barbeiro nao trabalha nesse dia!\n");
         return;
     }
 
 
     // ========================================================
-    // CONSULTAR OS INTERVALOS DO BARBEIRO
+    // CONSULTAR INTERVALOS DO BARBEIRO
     // ========================================================
 
-    // Abre o arquivo que armazena os intervalos cadastrados
     FILE *arquivoIntervalo = fopen("intervalos.dat", "rb");
 
-    // Se o arquivo nao existir, informa que nao ha intervalos
     if (arquivoIntervalo == NULL) {
+
         printf("Nenhum intervalo cadastrado!\n");
 
     } else {
 
-        // Estrutura que recebe cada intervalo lido do arquivo
         struct IntervaloBarbeiro intervalolido;
 
-        // Percorre todos os intervalos salvos
         while (fread(&intervalolido,
                      sizeof(struct IntervaloBarbeiro),
-                     1, arquivoIntervalo) == 1) {
+                     1,
+                     arquivoIntervalo) == 1) {
 
-            // Verifica se o intervalo pertence ao dia escolhido
             if (intervalolido.dia == diaSemana) {
 
-                // Percorre as horas desde o inicio ate antes do fim
                 for (int i = intervalolido.horaInicio;
                      i < intervalolido.horaFim;
                      i++) {
 
-                    // Impede acessar posicoes fora do vetor
                     if (i >= 0 && i < 24) {
 
-                        // Bloqueia a hora correspondente
                         horariosIntervalo[i] = 1;
                     }
                 }
 
-                // Confirma que encontrou um intervalo nesse dia
                 printf("Intervalo encontrado!\n");
             }
         }
 
-        // Fecha o arquivo apos ler todos os intervalos
         fclose(arquivoIntervalo);
     }
 
@@ -617,11 +707,9 @@ void agendarHorario(int idCliente) {
 
     printf("\n===== HORARIOS DA BARBEARIA =====\n");
 
-    // Percorre todas as horas do expediente
-    // O horario final nao entra nas opcoes de atendimento
     for (int i = horaInicio; i < horaFim; i++) {
 
-        // Bloqueia horarios que ja passaram no dia atual
+        // Horarios que ja passaram no dia atual
         if (ano == anoAtual &&
             mes == mesAtual &&
             dia == diaAtual &&
@@ -629,28 +717,26 @@ void agendarHorario(int idCliente) {
 
             printf("%02d:00 - INDISPONIVEL\n", i);
 
-        // Mostra quando ja existe uma reserva naquela hora
+        // Horarios ja reservados
         } else if (horariosOcupados[i] == 1) {
 
             printf("%02d:00 - OCUPADO\n", i);
 
-        // Mostra os horarios de intervalo do barbeiro
+        // Intervalos cadastrados
         } else if (horariosIntervalo[i] == 1) {
 
             printf("%02d:00 - INTERVALO DO BARBEIRO\n", i);
 
         } else {
 
-            // Mostra os horarios que passaram pelas verificacoes
             printf("%02d:00 - LIVRE\n", i);
 
-            // Indica que existe pelo menos uma hora livre
             temHOrarioLivre = 1;
         }
     }
 
-    // Encerra caso nao exista nenhum horario disponivel
     if (temHOrarioLivre == 0) {
+
         printf("Nao existe horarios disponiveis nessa data!\n");
         return;
     }
@@ -660,53 +746,51 @@ void agendarHorario(int idCliente) {
     // ESCOLHER O HORARIO DO ATENDIMENTO
     // ========================================================
 
-    // Repete a escolha ate receber uma hora permitida
     do {
 
-        // Inicialmente considera a hora valida
         horaValida = 1;
 
-        // Mostra os limites do expediente
         printf("Escolha um horario entre %02d:00 e %02d:00: ",
                horaInicio, horaFim - 1);
 
-        // Verifica se o usuario digitou um numero
         if (scanf("%d", &hora) != 1) {
+
             printf("Digite apenas numeros!\n");
 
-            // Descarta caracteres invalidos
             int c;
+
             while ((c = getchar()) != '\n' && c != EOF) {
             }
 
-            // Reinicia a hora e sinaliza a entrada invalida
             hora = 0;
             horaValida = 0;
         }
 
-        // Impede escolher horario fora do expediente
+        // Verifica se a hora pertence ao expediente
         if (hora < horaInicio || hora >= horaFim) {
+
             printf("Barbearia fechada nesse horario!\n");
             horaValida = 0;
         }
 
-        // Realiza as consultas somente para horas do expediente
         if (hora >= horaInicio && hora < horaFim) {
 
-            // Impede escolher horario reservado por outro cliente
+            // Verifica se o horario esta ocupado
             if (horariosOcupados[hora] == 1) {
+
                 printf("Esse horario ja esta ocupado! Escolha outro.\n");
                 horaValida = 0;
             }
 
-            // Impede escolher horario de intervalo do barbeiro
+            // Verifica os intervalos cadastrados
             if (horariosIntervalo[hora] == 1) {
+
                 printf("Esse horario e intervalo do barbeiro!\n");
                 horaValida = 0;
             }
         }
 
-        // Impede agendar em uma hora que ja passou hoje
+        // Verifica se o horario ja passou
         if (ano == anoAtual &&
             mes == mesAtual &&
             dia == diaAtual &&
@@ -720,32 +804,31 @@ void agendarHorario(int idCliente) {
 
 
     // ========================================================
-    // CONFERIR NOVAMENTE O HORARIO E CALCULAR O PROXIMO ID
+    // CONFERIR HORARIO E CALCULAR O PROXIMO ID
     // ========================================================
 
-    // Abre o arquivo com os agendamentos existentes
     arquivo = fopen("../Dados/agendamentos.dat", "rb");
 
-    // Informa se nao encontrou nenhuma reserva anterior
     if (arquivo == NULL) {
+
         printf("Nenhum agendamento salvo ainda.\n");
 
     } else {
 
         printf("Arquivo de agendamentos encontrado!\n");
 
-        // Percorre todos os agendamentos salvos
         while (fread(&agendamentoSalvo,
-                     sizeof(struct Agendamento), 1, arquivo) == 1) {
+                     sizeof(struct Agendamento),
+                     1,
+                     arquivo) == 1) {
 
-            // Mostra cada agendamento encontrado
             printf("Agendamento encontrado: %02d/%02d/%d as %02d:00\n",
                    agendamentoSalvo.dia,
                    agendamentoSalvo.mes,
                    agendamentoSalvo.ano,
                    agendamentoSalvo.hora);
 
-            // Verifica novamente se a hora escolhida esta ocupada
+            // Verifica novamente se a hora esta ocupada
             if (agendamentoSalvo.dia == dia &&
                 agendamentoSalvo.mes == mes &&
                 agendamentoSalvo.ano == ano &&
@@ -755,18 +838,18 @@ void agendarHorario(int idCliente) {
                 horarioOcupado = 1;
             }
 
-            // Guarda o maior ID encontrado para criar o proximo
+            // Identifica o maior ID
             if (agendamentoSalvo.id > maiorId) {
+
                 maiorId = agendamentoSalvo.id;
             }
         }
 
-        // Fecha o arquivo apos a consulta
         fclose(arquivo);
     }
 
-    // Impede continuar se o horario ja estiver ocupado
     if (horarioOcupado == 1) {
+
         printf("Nao foi possivel realizar o agendamento!\n");
         return;
     }
@@ -776,16 +859,13 @@ void agendarHorario(int idCliente) {
     // PREENCHER OS DADOS DA NOVA RESERVA
     // ========================================================
 
-    // Gera um ID para o novo agendamento
     novoAgendamento.id = maiorId + 1;
 
-    // Associa a reserva ao cliente logado
     novoAgendamento.idCliente = idCliente;
 
-    // Copia o nome de quem recebera o atendimento
-    strcpy(novoAgendamento.nomeAtendimento, nomeAtendimento);
+    strcpy(novoAgendamento.nomeAtendimento,
+           nomeAtendimento);
 
-    // Guarda a data e a hora escolhidas
     novoAgendamento.dia = dia;
     novoAgendamento.mes = mes;
     novoAgendamento.ano = ano;
@@ -793,43 +873,42 @@ void agendarHorario(int idCliente) {
 
 
     // ========================================================
-    // SALVAR A RESERVA NO ARQUIVO BINARIO
+    // SALVAR AGENDAMENTO NO ARQUIVO BINARIO
     // ========================================================
 
-    // Abre o arquivo em modo de adicao binaria
-    // "ab" acrescenta registros sem apagar os anteriores
     arquivo = fopen("../Dados/agendamentos.dat", "ab");
 
-    // Verifica se o arquivo foi aberto corretamente
     if (arquivo == NULL) {
+
         printf("Erro ao abrir o arquivo de agendamentos!\n");
         return;
     }
 
-    // Grava os dados completos da nova reserva
     if (fwrite(&novoAgendamento,
-               sizeof(struct Agendamento), 1, arquivo) != 1) {
+               sizeof(struct Agendamento),
+               1,
+               arquivo) != 1) {
 
-        printf("Erro ao salvar agendamento!");
+        printf("Erro ao salvar agendamento!\n");
 
-        // Fecha o arquivo antes de sair
         fclose(arquivo);
         return;
     }
 
-    // Fecha o arquivo apos a gravacao
     fclose(arquivo);
 
 
     // ========================================================
-    // EXIBIR O RESUMO DO AGENDAMENTO
+    // EXIBIR RESUMO DO AGENDAMENTO
     // ========================================================
 
-    // Mostra os dados da reserva recem-criada
     printf("\n===== RESUMO DO AGENDAMENTO =====\n");
 
-    printf("Agendamento ID: %d\n", novoAgendamento.id);
-    printf("Cliente ID: %d\n", novoAgendamento.idCliente);
+    printf("Agendamento ID: %d\n",
+           novoAgendamento.id);
+
+    printf("Cliente ID: %d\n",
+           novoAgendamento.idCliente);
 
     printf("Nome de quem sera atendido: %s\n",
            novoAgendamento.nomeAtendimento);
@@ -839,68 +918,67 @@ void agendarHorario(int idCliente) {
            novoAgendamento.mes,
            novoAgendamento.ano);
 
-    printf("Horario: %02d:00\n", novoAgendamento.hora);
+    printf("Horario: %02d:00\n",
+           novoAgendamento.hora);
 
     printf("Agendamento realizado com sucesso!\n");
 }
 
 
 // ============================================================
-// CONSULTAR OS AGENDAMENTOS DO CLIENTE
+// CONSULTAR AGENDAMENTOS DO CLIENTE
 // ============================================================
 
-// Mostra apenas os agendamentos do cliente logado
 void meusAgendamentos(int idCliente) {
 
-    // Ponteiro utilizado para consultar o arquivo binario
     FILE *arquivo;
 
-    // Estrutura usada para ler cada reserva
     struct Agendamento agendamentoSalvo;
 
-    // Identifica se alguma reserva do cliente foi encontrada
     int encontrou = 0;
 
-    // Abre o arquivo de agendamentos para leitura
     arquivo = fopen("../Dados/agendamentos.dat", "rb");
 
-    // Verifica se o arquivo existe e foi aberto
     if (arquivo == NULL) {
+
         printf("Nenhum agendamento encontrado!\n");
         return;
     }
 
-    // Le todos os agendamentos armazenados no arquivo
     while (fread(&agendamentoSalvo,
-                 sizeof(struct Agendamento), 1, arquivo) == 1) {
+                 sizeof(struct Agendamento),
+                 1,
+                 arquivo) == 1) {
 
-        // Mostra apenas os registros do cliente logado
         if (agendamentoSalvo.idCliente == idCliente) {
 
-            // Indica que encontrou uma reserva desse cliente
             encontrou = 1;
 
-            // Exibe as informacoes do agendamento
             printf("\n ===== AGENDAMENTO =====\n");
-            printf("Agendamento ID: %d\n", agendamentoSalvo.id);
+
+            printf("Agendamento ID: %d\n",
+                   agendamentoSalvo.id);
+
             printf("Cliente responsavel ID: %d\n",
                    agendamentoSalvo.idCliente);
-            printf("Nome: %s\n", agendamentoSalvo.nomeAtendimento);
+
+            printf("Nome: %s\n",
+                   agendamentoSalvo.nomeAtendimento);
 
             printf("Data: %02d/%02d/%d\n",
                    agendamentoSalvo.dia,
                    agendamentoSalvo.mes,
                    agendamentoSalvo.ano);
 
-            printf("Horario: %02d:00\n", agendamentoSalvo.hora);
+            printf("Horario: %02d:00\n",
+                   agendamentoSalvo.hora);
         }
     }
 
-    // Fecha o arquivo depois de consultar todos os registros
     fclose(arquivo);
 
-    // Avisa quando o cliente nao possui reservas cadastradas
     if (encontrou == 0) {
+
         printf("Voce ainda nao possui agendamento!\n");
     }
 }
@@ -910,145 +988,130 @@ void meusAgendamentos(int idCliente) {
 // CANCELAR AGENDAMENTO
 // ============================================================
 
-// Cancela uma reserva, se ela pertencer ao cliente e estiver no prazo
+// Permite cancelar apenas reservas do cliente logado
+// Exige pelo menos 2 horas de antecedencia
+
 void cancelarAgendamento(int idCliente) {
 
-    // Armazena o ID da reserva que o cliente deseja cancelar
     int idAgendamento;
 
-    // Ponteiro para ler o arquivo original de agendamentos
     FILE *arquivo;
-
-    // Ponteiro usado para criar e gravar o arquivo temporario
     FILE *arquivoTemporario;
 
-    // Estrutura usada para ler as reservas cadastradas
     struct Agendamento agendamentoSalvo;
 
-    // Controla se o agendamento informado foi encontrado
     int encontrou = 0;
-
-    // Controla se o cliente tem permissao para cancelar
     int autorizado = 0;
-
-    // Armazena a confirmacao do cancelamento
     int confirmar = 0;
 
 
     // ========================================================
-    // SOLICITAR O ID DO AGENDAMENTO
+    // SOLICITAR ID DO AGENDAMENTO
     // ========================================================
 
     printf("\n===== CANCELAR AGENDAMENTO =====\n");
+
     printf("Digite o ID do agendamento que deseja cancelar: ");
 
-    // Verifica se foi digitado um numero inteiro
     if (scanf("%d", &idAgendamento) != 1) {
+
         printf("Digite apenas numeros!\n");
 
-        // Limpa os caracteres invalidos
         int c;
+
         while ((c = getchar()) != '\n' && c != EOF) {
         }
 
         return;
     }
 
-    // Impede IDs iguais ou menores que zero
     if (idAgendamento <= 0) {
-        printf("ID do agedamento invalido!\n");
+
+        printf("ID do agendamento invalido!\n");
         return;
     }
 
-    // Mostra o ID escolhido pelo cliente
     printf("ID escolhido: %d\n", idAgendamento);
 
 
     // ========================================================
-    // LOCALIZAR O AGENDAMENTO E VERIFICAR O RESPONSAVEL
+    // LOCALIZAR AGENDAMENTO
     // ========================================================
 
-    // Abre o arquivo contendo os agendamentos
     arquivo = fopen("../Dados/agendamentos.dat", "rb");
 
     if (arquivo == NULL) {
-        printf("Nenhum agnedamento encontrado!\n");
+
+        printf("Nenhum agendamento encontrado!\n");
         return;
     }
 
-    // Procura a reserva e confere se pertence ao cliente
     while (fread(&agendamentoSalvo,
-                 sizeof(struct Agendamento), 1, arquivo) == 1) {
+                 sizeof(struct Agendamento),
+                 1,
+                 arquivo) == 1) {
 
-        // Verifica se encontrou o ID informado
         if (agendamentoSalvo.id == idAgendamento) {
 
             encontrou = 1;
 
-            // Confere se a reserva pertence ao cliente logado
             if (agendamentoSalvo.idCliente == idCliente) {
 
                 autorizado = 1;
 
-                // Mostra as informacoes da reserva encontrada
                 printf("Agendamento encontrado!\n");
-                printf("Nome: %s\n", agendamentoSalvo.nomeAtendimento);
+
+                printf("Nome: %s\n",
+                       agendamentoSalvo.nomeAtendimento);
 
                 printf("Data: %02d/%02d/%d\n",
                        agendamentoSalvo.dia,
                        agendamentoSalvo.mes,
                        agendamentoSalvo.ano);
 
-                printf("Horario: %02d:00\n", agendamentoSalvo.hora);
+                printf("Horario: %02d:00\n",
+                       agendamentoSalvo.hora);
 
             } else {
 
-                // Informa quando a reserva pertence a outra conta
                 printf("Esse agendamento nao pertence a sua conta!\n");
             }
 
-            // Interrompe a busca depois de localizar o ID
             break;
         }
     }
 
-    // Fecha o arquivo apos a consulta
     fclose(arquivo);
 
-    // Verifica se o ID informado existe
     if (encontrou == 0) {
+
         printf("Agendamento nao encontrado!\n");
         return;
     }
 
-    // Impede o cancelamento por outro cliente
     if (autorizado == 0) {
+
         printf("Voce nao tem permissao para cancelar esse agendamento!\n");
         return;
     }
 
 
     // ========================================================
-    // VERIFICAR O PRAZO PARA CANCELAMENTO
+    // VERIFICAR PRAZO DE CANCELAMENTO
     // ========================================================
 
-    // Estrutura que armazena a data e a hora da reserva
     struct tm dataAgendamento = {0};
 
-    // Preenche a data e a hora do agendamento encontrado
     dataAgendamento.tm_mday = agendamentoSalvo.dia;
     dataAgendamento.tm_mon = agendamentoSalvo.mes - 1;
     dataAgendamento.tm_year = agendamentoSalvo.ano - 1900;
     dataAgendamento.tm_hour = agendamentoSalvo.hora;
     dataAgendamento.tm_isdst = -1;
 
-    // Converte a data do agendamento para um instante de tempo
     time_t horarioAgendado = mktime(&dataAgendamento);
 
-    // Consulta a data e a hora atuais
     time_t horarioAtual = time(NULL);
 
-    // Verifica se houve erro na conversao das datas
     if (horarioAgendado == (time_t)-1 ||
         horarioAtual == (time_t)-1) {
 
@@ -1056,43 +1119,44 @@ void cancelarAgendamento(int idCliente) {
         return;
     }
 
-    // Calcula a diferenca em segundos entre a reserva e agora
-    double segundosRestantes = difftime(horarioAgendado, horarioAtual);
+    double segundosRestantes =
+        difftime(horarioAgendado, horarioAtual);
 
-    // So permite cancelar com pelo menos 2 horas de antecedencia
-    // 7200 segundos correspondem a 2 horas
+    // 7200 segundos = 2 horas
     if (segundosRestantes < 7200) {
 
         printf("Cancelamento nao permitido!\n");
+
         printf("O agendamento deve ser cancelado com pelo menos 2 horas de antecedencia.\n");
+
         return;
     }
 
 
     // ========================================================
-    // CONFIRMAR O CANCELAMENTO
+    // CONFIRMAR CANCELAMENTO
     // ========================================================
 
-    // Pede confirmacao antes de alterar o arquivo
     printf("\nDeseja realmente cancelar esse agendamento?\n");
 
     printf("1 - Sim, cancelar\n");
     printf("2 - Nao, voltar\n");
     printf("Escolha uma opcao: ");
 
-    // Verifica se a confirmacao e um numero
     if (scanf("%d", &confirmar) != 1) {
+
         printf("Digite apenas numeros!\n");
 
         int c;
+
         while ((c = getchar()) != '\n' && c != EOF) {
         }
 
         return;
     }
 
-    // Se nao confirmar com a opcao 1, encerra a operacao
     if (confirmar != 1) {
+
         printf("Cancelamento nao realizado!\n");
         return;
     }
@@ -1101,61 +1165,58 @@ void cancelarAgendamento(int idCliente) {
 
 
     // ========================================================
-    // ABRIR O ARQUIVO ORIGINAL
+    // ABRIR ARQUIVO ORIGINAL
     // ========================================================
 
-    // Abre o arquivo que contem todas as reservas
     arquivo = fopen("../Dados/agendamentos.dat", "rb");
 
     if (arquivo == NULL) {
+
         printf("Erro ao abrir os agendamentos!\n");
         return;
     }
 
 
     // ========================================================
-    // CRIAR O ARQUIVO TEMPORARIO
+    // CRIAR ARQUIVO TEMPORARIO
     // ========================================================
 
-    // Cria um arquivo temporario para guardar as outras reservas
-    // "wb" abre o arquivo para escrita binaria
-    arquivoTemporario = fopen("../Dados/agendamentos_temp.dat", "wb");
+    arquivoTemporario = fopen(
+        "../Dados/agendamentos_temp.dat", "wb");
 
-    // Verifica se o arquivo temporario foi criado
     if (arquivoTemporario == NULL) {
 
         printf("Erro ao criar o arquivo temporario!\n");
 
-        // Fecha o original antes de encerrar a operacao
         fclose(arquivo);
         return;
     }
 
 
     // ========================================================
-    // COPIAR AS RESERVAS QUE DEVEM SER MANTIDAS
+    // COPIAR AGENDAMENTOS QUE DEVEM SER MANTIDOS
     // ========================================================
 
-    // Copia tudo, menos o agendamento escolhido
     while (fread(&agendamentoSalvo,
-                 sizeof(struct Agendamento), 1, arquivo) == 1) {
+                 sizeof(struct Agendamento),
+                 1,
+                 arquivo) == 1) {
 
-        // Nao copia o registro que sera cancelado
+        // Nao copia o agendamento cancelado
         if (agendamentoSalvo.id != idAgendamento) {
 
-            // Grava no temporario a reserva que deve permanecer
             if (fwrite(&agendamentoSalvo,
                        sizeof(struct Agendamento),
-                       1, arquivoTemporario) != 1) {
+                       1,
+                       arquivoTemporario) != 1) {
 
                 printf("Erro ao copiar agendamento!\n");
 
-                // Fecha os arquivos em caso de falha
                 fclose(arquivo);
                 fclose(arquivoTemporario);
 
-                // Remove o arquivo temporario incompleto
                 remove("../Dados/agendamentos_temp.dat");
+
                 return;
             }
         }
@@ -1166,7 +1227,6 @@ void cancelarAgendamento(int idCliente) {
     // VERIFICAR ERROS DE LEITURA
     // ========================================================
 
-    // Evita trocar o arquivo caso a leitura tenha falhado
     if (ferror(arquivo)) {
 
         printf("Erro ao ler os agendamentos!\n");
@@ -1174,49 +1234,45 @@ void cancelarAgendamento(int idCliente) {
         fclose(arquivo);
         fclose(arquivoTemporario);
 
-        // Remove o arquivo temporario
         remove("../Dados/agendamentos_temp.dat");
+
         return;
     }
 
 
     // ========================================================
-    // FECHAR OS ARQUIVOS
+    // FECHAR ARQUIVOS
     // ========================================================
 
-    // Fecha o original e o temporario
-    // Guarda o resultado de cada fclose para verificar falhas
     int erroOriginal = fclose(arquivo);
+
     int erroTemporario = fclose(arquivoTemporario);
 
-    // Verifica se o fechamento dos arquivos apresentou erros
     if (erroOriginal != 0 || erroTemporario != 0) {
 
         printf("Erro ao fechar os arquivos!\n");
 
-        // Remove o temporario quando nao foi possivel finalizar
         remove("../Dados/agendamentos_temp.dat");
+
         return;
     }
 
 
     // ========================================================
-    // VERIFICAR SE JA EXISTE UM BACKUP
+    // VERIFICAR BACKUP EXISTENTE
     // ========================================================
 
-    // Abre o caminho do backup anterior somente para consulta
     FILE *backup = fopen(
         "../Dados/agendamentos_cancelamento_backup.dat", "rb");
 
-    // Se existe backup, nao realiza outra substituicao
     if (backup != NULL) {
 
         fclose(backup);
 
         printf("Ja existe um backup. Resolva isso antes de cancelar!\n");
 
-        // Remove o arquivo temporario criado nesta tentativa
         remove("../Dados/agendamentos_temp.dat");
+
         return;
     }
 
@@ -1225,7 +1281,6 @@ void cancelarAgendamento(int idCliente) {
     // CRIAR BACKUP DO ARQUIVO ORIGINAL
     // ========================================================
 
-    // Renomeia o arquivo original para preservar uma copia
     if (rename("../Dados/agendamentos.dat",
                "../Dados/agendamentos_cancelamento_backup.dat") != 0) {
 
@@ -1235,19 +1290,18 @@ void cancelarAgendamento(int idCliente) {
 
 
     // ========================================================
-    // SUBSTITUIR O ARQUIVO ORIGINAL
+    // SUBSTITUIR ARQUIVO ORIGINAL
     // ========================================================
 
-    // Renomeia o temporario para o nome do arquivo principal
-    // Assim o arquivo novo nao contem a reserva cancelada
     if (rename("../Dados/agendamentos_temp.dat",
                "../Dados/agendamentos.dat") != 0) {
 
         printf("Erro ao finalizar o cancelamento!\n");
 
-        // Tenta restaurar o arquivo original usando o backup
-        if (rename("../Dados/agendamentos_cancelamento_backup.dat",
-                   "../Dados/agendamentos.dat") != 0) {
+        // Restaura o original usando o backup
+        if (rename(
+                "../Dados/agendamentos_cancelamento_backup.dat",
+                "../Dados/agendamentos.dat") != 0) {
 
             printf("Erro: restaure o arquivo original pelo backup!\n");
         }
@@ -1257,14 +1311,14 @@ void cancelarAgendamento(int idCliente) {
 
 
     // ========================================================
-    // REMOVER O BACKUP APOS O CANCELAMENTO
+    // REMOVER BACKUP
     // ========================================================
 
-    // Remove o backup quando o arquivo novo foi criado
-    if (remove("../Dados/agendamentos_cancelamento_backup.dat") != 0) {
+    if (remove(
+            "../Dados/agendamentos_cancelamento_backup.dat") != 0) {
+
         printf("Aviso: nao foi possivel remover o backup!\n");
     }
 
-    // Confirma a conclusao do cancelamento
     printf("Agendamento cancelado com sucesso!\n");
 }
