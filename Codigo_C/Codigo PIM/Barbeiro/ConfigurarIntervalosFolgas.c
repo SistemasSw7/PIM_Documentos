@@ -1,129 +1,206 @@
 
 #include <stdio.h>
+#include <time.h>
+#include <errno.h>
 
-// Importa a estrutura que armazena os dias e horarios de trabalho
 #include "HorarioBarbeiro.h"
-
-// Importa a estrutura que armazena os intervalos do barbeiro
 #include "IntervaloBarbeiro.h"
-
-// Importa a estrutura que armazena uma data de folga do barbeiro
 #include "FolgaBarbeiro.h"
-
+#include "../Agendamento/Agendamento.h"
 #include "../Validacao/ValidarData.h"
 
-// Prototipo da funcao responsavel por configurar intervalos
+// Prototipos das funcoes
 void configurarIntervalos(void);
-
-// prototipo da funcao responsavel por configurar folgas
 void configurarFolgas(void);
-
 
 // ============================================================
 // MENU DE INTERVALOS E FOLGAS
 // ============================================================
 
-// Funcao responsavel por apresentar as opcoes ao barbeiro
 void configurarIntervalosFolgas(void) {
 
-    // Armazena a opcao escolhida pelo barbeiro
     int opcao = 0;
 
-    // Mantem o menu aberto ate o barbeiro escolher a opcao 3
     while (opcao != 3) {
 
-        // Exibe as opcoes disponiveis
         printf("\n===== INTERVALOS E FOLGAS =====\n");
-
         printf("1 - Configurar intervalos\n");
         printf("2 - Configurar folgas\n");
         printf("3 - Voltar\n");
-
-        // Solicita a opcao desejada
         printf("Escolha uma opcao: ");
 
-        // Verifica se o usuario digitou um numero inteiro
         if (scanf("%d", &opcao) != 1) {
 
             printf("Digite apenas numeros!\n");
 
-            // Limpa os caracteres invalidos da entrada
             int c;
             while ((c = getchar()) != '\n' && c != EOF) {
             }
 
-            // Reinicia a opcao para manter o menu ativo
+            if (c == EOF) {
+                return;
+            }
+
             opcao = 0;
+            continue;
         }
 
-        // Executa a funcionalidade correspondente a opcao
         switch (opcao) {
 
             case 1:
-                // Chama a funcao que configura os intervalos
                 configurarIntervalos();
                 break;
 
             case 2:
-                // Chama a funcao que configura as folgas
                 configurarFolgas();
                 break;
 
             case 3:
-                // Retorna ao menu principal do barbeiro
                 printf("Voltando ao menu anterior...\n");
                 break;
 
             default:
-                // Informa quando a opcao nao existe
                 printf("Opcao invalida!\n");
                 break;
         }
     }
 }
 
+// ============================================================
+// VERIFICAR CONFLITOS COM AGENDAMENTOS
+// ============================================================
+
+// Retorna:
+// 1 = existe conflito
+// 0 = nenhum conflito
+// -1 = erro na verificacao
+
+static int verificarConflitoAgendamentoIntervalo(
+    int diaSemana, int horaInicio, int horaFim) {
+
+    FILE *arquivo;
+    struct Agendamento agendamento;
+
+    time_t agora = time(NULL);
+    struct tm *dataAtual = localtime(&agora);
+
+    if (dataAtual == NULL) {
+        printf("Erro ao consultar a data atual!\n");
+        return -1;
+    }
+
+    int hoje = (dataAtual->tm_year + 1900) * 10000
+             + (dataAtual->tm_mon + 1) * 100
+             + dataAtual->tm_mday;
+
+    arquivo = fopen("../Dados/agendamentos.dat", "rb");
+
+    if (arquivo == NULL) {
+
+        if (errno == ENOENT) {
+            return 0;
+        }
+
+        printf("Erro ao abrir os agendamentos!\n");
+        return -1;
+    }
+
+    while (fread(&agendamento,
+                 sizeof(struct Agendamento),
+                 1, arquivo) == 1) {
+
+        int dataAgendamento = agendamento.ano * 10000
+                           + agendamento.mes * 100
+                           + agendamento.dia;
+
+        // Ignora atendimentos de datas anteriores
+        if (dataAgendamento < hoje) {
+            continue;
+        }
+
+        // Descobre o dia da semana do agendamento
+        struct tm data = {0};
+
+        data.tm_mday = agendamento.dia;
+        data.tm_mon = agendamento.mes - 1;
+        data.tm_year = agendamento.ano - 1900;
+        data.tm_isdst = -1;
+
+        if (mktime(&data) == (time_t)-1) {
+
+            printf("Erro ao verificar data do agendamento!\n");
+            fclose(arquivo);
+            return -1;
+        }
+
+        int diaAgendamento = data.tm_wday;
+
+        // Domingo no sistema corresponde ao dia 7
+        if (diaAgendamento == 0) {
+            diaAgendamento = 7;
+        }
+
+        // Verifica se o atendimento cai no intervalo
+        if (diaAgendamento == diaSemana &&
+            agendamento.hora >= horaInicio &&
+            agendamento.hora < horaFim) {
+
+            printf("\nExiste um agendamento nesse intervalo!\n");
+
+            printf("Data: %02d/%02d/%04d\n",
+                   agendamento.dia,
+                   agendamento.mes,
+                   agendamento.ano);
+
+            printf("Horario: %02d:00\n", agendamento.hora);
+
+            fclose(arquivo);
+            return 1;
+        }
+    }
+
+    if (ferror(arquivo)) {
+
+        printf("Erro ao ler os agendamentos!\n");
+        fclose(arquivo);
+        return -1;
+    }
+
+    if (fclose(arquivo) != 0) {
+
+        printf("Erro ao fechar os agendamentos!\n");
+        return -1;
+    }
+
+    return 0;
+}
 
 // ============================================================
 // CONFIGURAR INTERVALOS DO BARBEIRO
 // ============================================================
 
-// Funcao que permite cadastrar um intervalo durante o expediente
 void configurarIntervalos(void) {
 
-    // Armazena os horarios informados pelo barbeiro
     int horaInicioIntervalos;
     int horaFimIntervalos;
-
-    // Armazena o dia da semana escolhido
     int diaSemana;
 
-    // Armazena o inicio e o fim do expediente cadastrado
-    int inicioExpediente;
-    int fimExpediente;
-
-    // Controla se existe expediente cadastrado para o dia
-    // 0 = nao encontrado | 1 = encontrado
+    int inicioExpediente = 0;
+    int fimExpediente = 0;
     int encontrouExpediente = 0;
 
-    // Estrutura que armazenara os dados do novo intervalo
     struct IntervaloBarbeiro intervalo;
-
-    // Estrutura utilizada para ler os expedientes salvos
+    struct IntervaloBarbeiro intervaloSalvo;
     struct HorarioBarbeiro horario;
 
-    // Ponteiro utilizado para ler o arquivo de horarios
     FILE *arquivoHorario;
-
-    // Ponteiro utilizado para salvar o arquivo de intervalos
     FILE *arquivoIntervalo;
 
-
     // ========================================================
-    // ESCOLHER O DIA DA SEMANA
+    // ESCOLHER DIA DA SEMANA
     // ========================================================
 
-    // Exibe os dias disponiveis para configuracao
-    printf("Escolha o dia da semana:\n");
+    printf("\nEscolha o dia da semana:\n");
     printf("1 - Segunda-feira\n");
     printf("2 - Terca-feira\n");
     printf("3 - Quarta-feira\n");
@@ -131,45 +208,35 @@ void configurarIntervalos(void) {
     printf("5 - Sexta-feira\n");
     printf("6 - Sabado\n");
     printf("7 - Domingo\n");
-
-    // Solicita o dia desejado
     printf("Digite o dia: ");
 
-    // Verifica se o valor informado e numerico
     if (scanf("%d", &diaSemana) != 1) {
 
         printf("Digite apenas numeros!\n");
 
-        // Descarta os caracteres invalidos
         int c;
         while ((c = getchar()) != '\n' && c != EOF) {
         }
 
-        // Encerra a configuracao
         return;
     }
 
-    // Verifica se o dia esta entre segunda e domingo
     if (diaSemana < 1 || diaSemana > 7) {
 
         printf("Dia da semana invalido!\n");
         return;
     }
 
-
     // ========================================================
-    // INFORMAR OS HORARIOS DO INTERVALO
+    // INFORMAR HORARIOS DO INTERVALO
     // ========================================================
 
-    // Solicita a hora em que o intervalo comeca
     printf("Digite a hora de inicio do intervalo: ");
 
-    // Verifica se a entrada e um numero inteiro
     if (scanf("%d", &horaInicioIntervalos) != 1) {
 
         printf("Digite apenas numeros!\n");
 
-        // Limpa a entrada invalida
         int c;
         while ((c = getchar()) != '\n' && c != EOF) {
         }
@@ -177,15 +244,12 @@ void configurarIntervalos(void) {
         return;
     }
 
-    // Solicita a hora em que o intervalo termina
     printf("Digite a hora do fim do intervalo: ");
 
-    // Verifica se a entrada e um numero inteiro
     if (scanf("%d", &horaFimIntervalos) != 1) {
 
         printf("Digite apenas numeros!\n");
 
-        // Limpa a entrada invalida
         int c;
         while ((c = getchar()) != '\n' && c != EOF) {
         }
@@ -193,90 +257,80 @@ void configurarIntervalos(void) {
         return;
     }
 
-
     // ========================================================
-    // VALIDAR OS HORARIOS INFORMADOS
+    // VALIDAR HORARIOS
     // ========================================================
 
-    // Impede horas iniciais menores que 0 ou maiores que 23
-    if (horaInicioIntervalos < 0 || horaInicioIntervalos > 23) {
+    if (horaInicioIntervalos < 0 ||
+        horaInicioIntervalos > 23) {
 
         printf("Hora de inicio invalida!\n");
         return;
     }
 
-    // Impede horas finais menores que 0 ou maiores que 23
-    if (horaFimIntervalos < 0 || horaFimIntervalos > 23) {
+    if (horaFimIntervalos < 0 ||
+        horaFimIntervalos > 23) {
 
         printf("Hora de fim invalida!\n");
         return;
     }
 
-    // Verifica se o termino e posterior ao inicio
-    // Exemplo invalido: intervalo das 14h as 12h
     if (horaFimIntervalos <= horaInicioIntervalos) {
 
         printf("Horario invalido!\n");
         return;
     }
 
-
     // ========================================================
-    // CONSULTAR O EXPEDIENTE DO BARBEIRO
+    // CONSULTAR EXPEDIENTE
     // ========================================================
 
-    // Abre o arquivo que contem os expedientes cadastrados
-    // "rb" significa leitura de arquivo binario
     arquivoHorario = fopen("horario.dat", "rb");
 
-    // Verifica se foi possivel abrir o arquivo
     if (arquivoHorario == NULL) {
 
         printf("Erro ao abrir o arquivo de horarios!\n");
         return;
     }
 
-    // Percorre todos os expedientes salvos no arquivo
-    // fread le um registro da estrutura por vez
-    while (fread(&horario, sizeof(struct HorarioBarbeiro),
+    while (fread(&horario,
+                 sizeof(struct HorarioBarbeiro),
                  1, arquivoHorario) == 1) {
 
-        // Verifica se o expediente pertence ao dia escolhido
         if (horario.dia == diaSemana) {
 
-            // Guarda o inicio e o fim do expediente encontrado
             inicioExpediente = horario.horaInicio;
             fimExpediente = horario.horaFim;
 
-            // Indica que encontramos um expediente para o dia
             encontrouExpediente = 1;
 
             printf("Expediente encontrado!\n");
         }
     }
 
-    // Fecha o arquivo apos terminar a leitura
-    fclose(arquivoHorario);
+    if (ferror(arquivoHorario)) {
 
+        printf("Erro ao consultar os horarios!\n");
+        fclose(arquivoHorario);
+        return;
+    }
 
-    // ========================================================
-    // VERIFICAR SE EXISTE EXPEDIENTE CADASTRADO
-    // ========================================================
+    if (fclose(arquivoHorario) != 0) {
 
-    // Impede cadastrar intervalos em dias sem expediente
+        printf("Erro ao fechar o arquivo de horarios!\n");
+        return;
+    }
+
     if (encontrouExpediente == 0) {
 
         printf("Nenhum expediente cadastrado nesse dia!\n");
         return;
     }
 
-
     // ========================================================
     // VERIFICAR SE O INTERVALO ESTA DENTRO DO EXPEDIENTE
     // ========================================================
 
-    // Impede intervalos que comecam antes do expediente
-    // ou terminam depois do horario de trabalho
     if (horaInicioIntervalos < inicioExpediente ||
         horaFimIntervalos > fimExpediente) {
 
@@ -284,198 +338,321 @@ void configurarIntervalos(void) {
         return;
     }
 
+    // ========================================================
+    // VERIFICAR CONFLITOS COM AGENDAMENTOS
+    // ========================================================
+
+    int conflito = verificarConflitoAgendamentoIntervalo(
+        diaSemana,
+        horaInicioIntervalos,
+        horaFimIntervalos
+    );
+
+    if (conflito == 1) {
+
+        printf("Intervalo cancelado por conflito de agendamento!\n");
+        return;
+    }
+
+    if (conflito == -1) {
+
+        printf("Nao foi possivel verificar os agendamentos!\n");
+        return;
+    }
 
     // ========================================================
-    // PREENCHER A ESTRUTURA DO INTERVALO
+    // PREENCHER ESTRUTURA DO INTERVALO
     // ========================================================
 
-    // Armazena o dia e os horarios informados na estrutura
     intervalo.dia = diaSemana;
     intervalo.horaInicio = horaInicioIntervalos;
     intervalo.horaFim = horaFimIntervalos;
 
+    // ========================================================
+    // SALVAR OU ATUALIZAR INTERVALO SEM DUPLICAR
+    // ========================================================
+
+    long posicaoEncontrada = -1;
+    int quantidadeEncontrada = 0;
+
+    // Abre o arquivo para leitura e atualizacao
+    arquivoIntervalo = fopen("intervalos.dat", "rb+");
+
+    if (arquivoIntervalo != NULL) {
+
+        while (fread(&intervaloSalvo,
+                     sizeof(struct IntervaloBarbeiro),
+                     1, arquivoIntervalo) == 1) {
+
+            if (intervaloSalvo.dia == diaSemana) {
+
+                quantidadeEncontrada++;
+
+                // Guarda a posicao do registro encontrado
+                long posicao = ftell(arquivoIntervalo);
+
+                if (posicao < 0) {
+
+                    printf("Erro ao localizar o intervalo!\n");
+                    fclose(arquivoIntervalo);
+                    return;
+                }
+
+                posicaoEncontrada =
+                    posicao - (long)sizeof(struct IntervaloBarbeiro);
+            }
+        }
+
+        if (ferror(arquivoIntervalo)) {
+
+            printf("Erro ao consultar os intervalos!\n");
+            fclose(arquivoIntervalo);
+            return;
+        }
+
+        // Bloqueia registros ja duplicados
+        if (quantidadeEncontrada > 1) {
+
+            printf("Ha intervalos duplicados nesse dia!\n");
+            printf("Corrija os registros antes de editar!\n");
+
+            fclose(arquivoIntervalo);
+            return;
+        }
+
+        // ====================================================
+        // ATUALIZAR INTERVALO EXISTENTE
+        // ====================================================
+
+        if (quantidadeEncontrada == 1) {
+
+            if (fseek(arquivoIntervalo,
+                      posicaoEncontrada,
+                      SEEK_SET) != 0) {
+
+                printf("Erro ao localizar o intervalo!\n");
+                fclose(arquivoIntervalo);
+                return;
+            }
+
+            if (fwrite(&intervalo,
+                       sizeof(struct IntervaloBarbeiro),
+                       1, arquivoIntervalo) != 1) {
+
+                printf("Erro ao atualizar o intervalo!\n");
+                fclose(arquivoIntervalo);
+                return;
+            }
+
+            if (fclose(arquivoIntervalo) != 0) {
+
+                printf("Erro ao finalizar a atualizacao!\n");
+                return;
+            }
+
+            printf("Intervalo atualizado com sucesso!\n");
+            return;
+        }
+
+        if (fclose(arquivoIntervalo) != 0) {
+
+            printf("Erro ao fechar o arquivo de intervalos!\n");
+            return;
+        }
+
+    } else if (errno != ENOENT) {
+
+        printf("Erro ao abrir o arquivo de intervalos!\n");
+        return;
+    }
 
     // ========================================================
-    // SALVAR O INTERVALO EM ARQUIVO BINARIO
+    // CADASTRAR NOVO INTERVALO
     // ========================================================
 
-    // Abre o arquivo no modo "ab"
-    // Esse modo adiciona registros sem apagar os anteriores
+    // So chega aqui se nao existir intervalo nesse dia
     arquivoIntervalo = fopen("intervalos.dat", "ab");
 
-    // Verifica se o arquivo foi aberto corretamente
     if (arquivoIntervalo == NULL) {
 
         printf("Erro ao abrir o arquivo de intervalos!\n");
         return;
     }
 
-    // Grava a estrutura completa no arquivo binario
-    // fwrite retorna a quantidade de registros gravados
-    if (fwrite(&intervalo, sizeof(struct IntervaloBarbeiro),
+    if (fwrite(&intervalo,
+               sizeof(struct IntervaloBarbeiro),
                1, arquivoIntervalo) != 1) {
 
         printf("Erro ao salvar o intervalo!\n");
-
-        // Fecha o arquivo antes de encerrar a funcao
         fclose(arquivoIntervalo);
         return;
     }
 
-    // Fecha o arquivo e verifica se houve erro no fechamento
     if (fclose(arquivoIntervalo) != 0) {
 
         printf("Erro ao finalizar o arquivo de intervalos!\n");
         return;
     }
 
-    // Exibe a confirmacao somente apos salvar os dados
     printf("Intervalo configurado com sucesso!\n");
 }
 
-// Funcao responsavel por cadastrar as folgas do barbeiro
-void configurarFolgas(void){
+// ============================================================
+// CONFIGURAR FOLGAS DO BARBEIRO
+// ============================================================
 
-    //armazena a data escolhada para a folga
+void configurarFolgas(void) {
+
     int dia;
     int mes;
     int ano;
 
-    //estrutura que armazena os dados da folga
     struct FolgaBarbeiro folga;
+    struct FolgaBarbeiro folgalida;
 
-    // ponteiro utilizado para salvar a folga no arquivo
     FILE *arquivoFolga;
-
+    FILE *arquivoConsulta;
 
     printf("\n===== CONFIGURAR FOLGAS =====\n");
 
-    // Solicita o dia de folga
+    // Solicita o dia
     printf("Digite o dia de folga: ");
 
-    if(scanf("%d", &dia) != 1){
+    if (scanf("%d", &dia) != 1) {
+
         printf("Digite apenas numeros!\n");
 
-        // limpa os caracteres invalidos
         int c;
-        while((c = getchar()) != '\n' && c != EOF){
+        while ((c = getchar()) != '\n' && c != EOF) {
         }
+
         return;
     }
+
     if (dia < 1 || dia > 31) {
+
         printf("Dia invalido!\n");
         return;
     }
-    
-    // Solicita o mes da folga
+
+    // Solicita o mes
     printf("Digite o mes da folga: ");
 
-    // Verifica se o mes foi digitado corretamente
-    if(scanf("%d", &mes) != 1){
+    if (scanf("%d", &mes) != 1) {
+
         printf("Digite apenas numeros!\n");
 
-        //limpa os caracteres invalidos
-        int c; 
-        while((c = getchar()) != '\n' && c != EOF){
+        int c;
+        while ((c = getchar()) != '\n' && c != EOF) {
         }
+
         return;
     }
 
-    //Verifica se o mes esta entre 1 e 12
-    if(mes < 1 || mes > 12){
+    if (mes < 1 || mes > 12) {
+
         printf("Mes invalido!\n");
         return;
     }
 
-    //Solicita o ano da folga
+    // Solicita o ano
     printf("Digite o ano da folga: ");
 
-    if(scanf("%d", &ano) != 1){
+    if (scanf("%d", &ano) != 1) {
+
         printf("Digite apenas numeros!\n");
 
-        // Limpa os caracteres invalidos
         int c;
-        while((c = getchar()) != '\n' && c != EOF){
+        while ((c = getchar()) != '\n' && c != EOF) {
         }
+
         return;
     }
 
-    //Verifica se o ano informado e valido
-    if(ano < 1900 || ano > 9999){
+    if (ano < 1900 || ano > 9999) {
+
         printf("Ano invalido!\n");
         return;
     }
 
-    //Verifica se a data de folga e valida
-    if(validarData(dia, mes, ano) == 0){
+    // Valida a data completa
+    if (validarData(dia, mes, ano) == 0) {
+
         printf("Data de folga invalida!\n");
         return;
     }
-    //Abre o arquivo para consultar as folgas cadastradas
-    FILE *arquivoConsulta = fopen("folgas.dat", "rb");
 
-    //Estrutura ultilizada para ler as folgas existentes
-    struct FolgaBarbeiro folgalida;
+    // ========================================================
+    // VERIFICAR SE A FOLGA JA EXISTE
+    // ========================================================
 
-    //Verifica se o arquivo existe
-    if(arquivoConsulta != NULL){
-        //Percorre todas as folgas cadastradas
-        while(fread(&folgalida, sizeof(struct FolgaBarbeiro), 1, arquivoConsulta) == 1){
-            //Compara a data cadastrada com a data escolhida
-            if(folgalida.dia == dia && folgalida.mes == mes && folgalida.ano == ano){
+    arquivoConsulta = fopen("folgas.dat", "rb");
+
+    if (arquivoConsulta != NULL) {
+
+        while (fread(&folgalida,
+                     sizeof(struct FolgaBarbeiro),
+                     1, arquivoConsulta) == 1) {
+
+            if (folgalida.dia == dia &&
+                folgalida.mes == mes &&
+                folgalida.ano == ano) {
+
                 printf("Ja existe uma folga cadastrada nessa data!\n");
+
                 fclose(arquivoConsulta);
                 return;
             }
         }
-        //Fecha o arquivo apos a consulta
+
         fclose(arquivoConsulta);
     }
 
-    // Armazena a data escolhida na estrutura
+    // ========================================================
+    // SALVAR FOLGA
+    // ========================================================
+
     folga.dia = dia;
     folga.mes = mes;
     folga.ano = ano;
 
-    // Abre o arquivo para adicionar uma folga
     arquivoFolga = fopen("folgas.dat", "ab");
 
-    //Verifica se o arquivo foi aberto corretamente
-    if(arquivoFolga == NULL){
+    if (arquivoFolga == NULL) {
+
         printf("Erro ao abrir o arquivo de folgas!\n");
         return;
     }
 
-    //Salva a folga no arquivo binario
-    if (fwrite(&folga, sizeof(struct FolgaBarbeiro), 1, arquivoFolga) != 1){
+    if (fwrite(&folga,
+               sizeof(struct FolgaBarbeiro),
+               1, arquivoFolga) != 1) {
+
         printf("Erro ao salvar a folga!\n");
+        fclose(arquivoFolga);
         return;
     }
 
-    //Fecha o arquivo e verifica se holve erro 
-    if (fclose(arquivoFolga)!= 0){
+    if (fclose(arquivoFolga) != 0) {
+
         printf("Erro ao finalizar o arquivo de folgas!\n");
         return;
     }
 
-    //Confirma o cadastro da folga
     printf("Folga confirmada com sucesso!\n");
-
 }
 
- // Funcao responsavel por visualizar os intervalos cadastrados
+// ============================================================
+// VISUALIZAR INTERVALOS CADASTRADOS
+// ============================================================
+
 void visualizarIntervalosBarbeiro(void) {
 
-    // Ponteiro para acessar o arquivo de intervalos
     FILE *arquivo;
-
-    // Estrutura que armazena cada intervalo lido
     struct IntervaloBarbeiro intervalo;
 
-    // Conta quantos intervalos foram encontrados
     int quantidade = 0;
 
-    // Vetor com os dias da semana
     const char *diasSemana[] = {
         "Segunda-feira",
         "Terca-feira",
@@ -488,84 +665,78 @@ void visualizarIntervalosBarbeiro(void) {
 
     printf("\n===== INTERVALOS CADASTRADOS =====\n");
 
-    // Abre o arquivo em modo de leitura binaria
     arquivo = fopen("intervalos.dat", "rb");
 
-    // Verifica se o arquivo foi aberto
     if (arquivo == NULL) {
+
         printf("Nenhum intervalo cadastrado!\n");
         return;
     }
 
-    // Le os intervalos salvos, um por vez
-    while (fread(&intervalo, sizeof(struct IntervaloBarbeiro),
+    while (fread(&intervalo,
+                 sizeof(struct IntervaloBarbeiro),
                  1, arquivo) == 1) {
 
-        // Verifica se o dia da semana e valido
         if (intervalo.dia >= 1 && intervalo.dia <= 7) {
 
             quantidade++;
 
-            printf("\nDia: %s\n", diasSemana[intervalo.dia - 1]);
+            printf("\nDia: %s\n",
+                   diasSemana[intervalo.dia - 1]);
+
             printf("Inicio: %02d:00\n", intervalo.horaInicio);
             printf("Termino: %02d:00\n", intervalo.horaFim);
-
             printf("------------------------------\n");
         }
     }
 
-    // Verifica se encontrou algum intervalo
     if (quantidade == 0) {
         printf("Nenhum intervalo cadastrado!\n");
     }
 
-    // Fecha o arquivo depois da leitura
     fclose(arquivo);
 }
 
+// ============================================================
+// VISUALIZAR FOLGAS CADASTRADAS
+// ============================================================
 
- // Funcao responsavel por visualizar as folgas cadastradas
 void visualizarFolgasBarbeiro(void) {
 
-    // Ponteiro para acessar o arquivo de folgas
     FILE *arquivo;
-
-    // Estrutura utilizada para ler cada folga
     struct FolgaBarbeiro folga;
 
-    // Conta quantas folgas foram encontradas
     int quantidade = 0;
 
     printf("\n===== FOLGAS CADASTRADAS =====\n");
 
-    // Abre o arquivo para leitura binaria
     arquivo = fopen("folgas.dat", "rb");
 
-    // Verifica se o arquivo foi aberto
     if (arquivo == NULL) {
+
         printf("Nenhuma folga cadastrada!\n");
         return;
     }
 
-    // Le as folgas cadastradas, uma por vez
-    while (fread(&folga, sizeof(struct FolgaBarbeiro), 1, arquivo) == 1) {
+    while (fread(&folga,
+                 sizeof(struct FolgaBarbeiro),
+                 1, arquivo) == 1) {
 
         quantidade++;
 
-        // Mostra a data da folga
         printf("\nFolga %d\n", quantidade);
 
         printf("Data: %02d/%02d/%04d\n",
-               folga.dia, folga.mes, folga.ano);
+               folga.dia,
+               folga.mes,
+               folga.ano);
 
         printf("------------------------------\n");
     }
 
-    // Verifica se existem folgas cadastradas
     if (quantidade == 0) {
         printf("Nenhuma folga cadastrada!\n");
     }
 
-    // Fecha o arquivo apos a leitura
     fclose(arquivo);
 }
