@@ -20,7 +20,7 @@ Este diretório serve como forma de documentar detalhadamente sobre o Backlog do
 | --- | --- |
 | **BR01** | Um agendamento só pode ser cancelado com 2 horas de antecedência. |
 | **BR02** | Apenas o Barbeiro pode cancelar um agendamento fora das 2 horas de antecedência determinadas. |
-| **BR03** | Apenas o Barbeiro pode alterar, editar ou excluir serviços, horários ou datas da agenda. |
+| **BR03** | Apenas o Barbeiro ou ADM pode alterar, editar ou excluir serviços, horários ou datas da agenda. |
 | **BR04** | Um cancelamento só pode ser realizado em um agendamento que ainda não foi concluído. |
 
 ## Requisitos Funcionais
