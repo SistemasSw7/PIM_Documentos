@@ -77,13 +77,13 @@ Ao final da Sprint 5, o esperado é que o cliente consiga visualizar os serviço
 
 | TAREFAS | DESCRIÇÃO | CHECK |
 | --- | --- | --- |
-| T1 | Criar tela de histórico de serviços realizados. US02 | DOING |
-| T2 | Registrar o serviço realizado no histórico. US02 | DOING |
-| T3 | Exibir qual serviço foi realizado. US02 | DOING  |
-| T4 | Exibir data e horário em que o serviço foi realizado. US02 | DOING |
-| T5 | Exibir informações do barbeiro responsável pelo serviço. US02 | DOING |
-| T6 | Exibir informações do cliente atendido. US02 | DOING |
-| T7 | Testar o estoque e o histórico de serviços. US02/US03 | DOING |
+| T1 | Criar tela de histórico de serviços realizados. US02 | DONE |
+| T2 | Registrar o serviço realizado no histórico. US02 | DONE |
+| T3 | Exibir qual serviço foi realizado. US02 | DONE |
+| T4 | Exibir data e horário em que o serviço foi realizado. US02 | DONE |
+| T5 | Exibir informações do barbeiro responsável pelo serviço. US02 | DONE |
+| T6 | Exibir informações do cliente atendido. US02 | DONE |
+| T7 | Testar o estoque e o histórico de serviços. US02/US03 | DONE |
 
 Ao final da Sprint 6, o esperado é que o dono deverá conseguir visualizar o histórico dos serviços realizados, contendo informações sobre o serviço, cliente, barbeiro, data e horário do atendimento.
 
@@ -91,16 +91,16 @@ Ao final da Sprint 6, o esperado é que o dono deverá conseguir visualizar o hi
 
 | TAREFAS | DESCRIÇÃO | CHECK |
 | --- | --- | --- |
-| T1 | Controle de acesso do dono, cliente e administrador. US01/US05 | TO DO |
-| T2 | Impedir que clientes acessem funções do dono ou administrador. US01 | TO DO |
-| T3 | Exigir login para acessar as funcionalidades do sistema. US01/US05 | TO DO |
-| T4 | Garantir que o cliente só possa cancelar seus próprios agendamentos. US07 | TO DO |
-| T5 | Implementar armazenamento de dados (usuários, serviços, produtos, agendamentos). RNF03 | TO DO |
-| T6 | Permitir recuperação dos dados e backup. RNF03 | TO DO |
-| T7 | Verificar se as informações exibidas na agenda estão atualizadas para os clientes. RNF02 | TO DO |
-| T8 | Realizar testes gerais do sistema. Todos | TO DO |
-| T9 | Corrigir erros encontrados durante os testes. Todos | TO DO |
-| T10 | Testar cadastro, login, agenda, agendamento, cancelamento, serviços e histórico. Todos | TO DO |
-| T11 | Realizar teste final de segurança e acesso. RNF01 | TO DO |
+| T1 | Controle de acesso do dono, cliente e administrador. US01/US05 | DONE |
+| T2 | Impedir que clientes acessem funções do dono ou administrador. US01 | DONE |
+| T3 | Exigir login para acessar as funcionalidades do sistema. US01/US05 | DONE |
+| T4 | Garantir que o cliente só possa cancelar seus próprios agendamentos. US07 | DONE |
+| T5 | Implementar armazenamento de dados (usuários, serviços, produtos, agendamentos). RNF03 | DONE |
+| T6 | Permitir recuperação dos dados e backup. RNF03 | DONE |
+| T7 | Verificar se as informações exibidas na agenda estão atualizadas para os clientes. RNF02 | DONE |
+| T8 | Realizar testes gerais do sistema. Todos | DONE |
+| T9 | Corrigir erros encontrados durante os testes. Todos | DONE |
+| T10 | Testar cadastro, login, agenda, agendamento, cancelamento, serviços e histórico. Todos | DONE |
+| T11 | Realizar teste final de segurança e acesso. RNF01 | DONE |
 
 Ao final da Sprint 7, o esperado é que o sistema esteja pronto para ser utilizado via terminal, com os dados testados e armazenados em arquivos `.dat`.
