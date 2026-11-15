@@ -16,6 +16,9 @@ void configurarFolgas(void);
 // Nova funcao: configura um dia fixo de folga por semana
 static void configurarFolgaSemanal(void);
 
+// Nova opcao: aplica o mesmo intervalo aos dias de trabalho da semana
+static void configurarIntervalosSemana(void);
+
 
 // ============================================================
 // MENU DE INTERVALOS E FOLGAS
@@ -26,17 +29,17 @@ void configurarIntervalosFolgas(void) {
     int opcao = 0;
 
     // Mantem o menu aberto ate escolher voltar
-    while (opcao != 4) {
+    while (opcao != 5) {
 
         printf("\n===== INTERVALOS E FOLGAS =====\n");
-        printf("1 - Configurar intervalos\n");
-        printf("2 - Configurar folga por data\n");
-        printf("3 - Configurar folga semanal\n");
-        printf("4 - Voltar\n");
+        printf("1 - Configurar intervalos por data\n");
+        printf("2 - Configurar intervalos semanal\n");
+        printf("3 - Configurar folga por data\n");
+        printf("4 - Configurar folga semanal\n");
+        printf("5 - Voltar\n");
         printf("Escolha uma opcao: ");
 
         if (scanf("%d", &opcao) != 1) {
-
             printf("Digite apenas numeros!\n");
 
             int c;
@@ -52,23 +55,27 @@ void configurarIntervalosFolgas(void) {
         }
 
         switch (opcao) {
-
             case 1:
-                // Configura o intervalo de um dia
+                // Configura o intervalo de um dia (funcao ja existente)
                 configurarIntervalos();
                 break;
 
             case 2:
+                // Aplica o intervalo em todos os dias de trabalho
+                configurarIntervalosSemana();
+                break;
+
+            case 3:
                 // Mantem a folga por data como ja funcionava
                 configurarFolgas();
                 break;
 
-            case 3:
+            case 4:
                 // Configura a folga fixa da semana
                 configurarFolgaSemanal();
                 break;
 
-            case 4:
+            case 5:
                 printf("Voltando ao menu anterior...\n");
                 break;
 
@@ -93,12 +100,15 @@ static int verificarConflitoAgendamentoIntervalo(
     int diaSemana, int horaInicio, int horaFim) {
 
     FILE *arquivo;
+
     struct Agendamento agendamento;
 
     time_t agora = time(NULL);
+
     struct tm *dataAtual = localtime(&agora);
 
     if (dataAtual == NULL) {
+
         printf("Erro ao consultar a data atual!\n");
         return -1;
     }
@@ -670,7 +680,6 @@ void visualizarIntervalosBarbeiro(void) {
 
     FILE *arquivo;
     struct IntervaloBarbeiro intervalo;
-
     int quantidade = 0;
 
     const char *diasSemana[] = {
@@ -729,7 +738,6 @@ void visualizarFolgasBarbeiro(void) {
 
     FILE *arquivo;
     struct FolgaBarbeiro folga;
-
     int quantidade = 0;
 
     printf("\n===== FOLGAS CADASTRADAS =====\n");
@@ -860,7 +868,6 @@ static void configurarFolgaSemanal(void) {
 
             printf("%s ja e a folga semanal cadastrada!\n",
                    nomesDias[diaSemana]);
-
             return;
         }
 
@@ -890,9 +897,7 @@ static void configurarFolgaSemanal(void) {
     if (conflito == 1) {
 
         printf("\nNao foi possivel configurar essa folga!\n");
-
         printf("Existem agendamentos futuros nesse dia da semana.\n");
-
         return;
     }
 
@@ -907,11 +912,8 @@ static void configurarFolgaSemanal(void) {
     // ========================================================
 
     printf("\n===== CONFIRMAR FOLGA SEMANAL =====\n");
-
     printf("Dia escolhido: %s\n", nomesDias[diaSemana]);
-
     printf("Esse dia sera folga toda semana.\n");
-
     printf("1 - Confirmar\n");
     printf("2 - Cancelar\n");
     printf("Escolha uma opcao: ");
@@ -940,7 +942,6 @@ static void configurarFolgaSemanal(void) {
 
         printf("Existe um backup pendente da folga semanal!\n");
         printf("Verifique o backup antes de continuar.\n");
-
         return;
     }
 
@@ -969,17 +970,14 @@ static void configurarFolgaSemanal(void) {
     if (fwrite(&diaSemana, sizeof(int), 1, temporario) != 1) {
 
         printf("Erro ao gravar a folga semanal!\n");
-
         fclose(temporario);
         remove("folga_semanal_temp.dat");
-
         return;
     }
 
     if (fclose(temporario) != 0) {
 
         printf("Erro ao finalizar arquivo temporario!\n");
-
         remove("folga_semanal_temp.dat");
         return;
     }
@@ -1000,7 +998,6 @@ static void configurarFolgaSemanal(void) {
     } else if (errno != ENOENT) {
 
         printf("Erro ao verificar a folga semanal anterior!\n");
-
         remove("folga_semanal_temp.dat");
         return;
     }
@@ -1015,7 +1012,6 @@ static void configurarFolgaSemanal(void) {
                    "folga_semanal_backup.dat") != 0) {
 
             printf("Erro ao criar backup da folga semanal!\n");
-
             remove("folga_semanal_temp.dat");
             return;
         }
@@ -1047,12 +1043,376 @@ static void configurarFolgaSemanal(void) {
     if (existeOriginal == 1) {
 
         if (remove("folga_semanal_backup.dat") != 0) {
-
             printf("Aviso: nao foi possivel remover o backup!\n");
         }
     }
 
     printf("\nFolga semanal configurada com sucesso!\n");
-
     printf("Dia: %s\n", nomesDias[diaSemana]);
+}
+
+
+// ============================================================
+// CONFIGURAR INTERVALOS DA SEMANA INTEIRA
+// ============================================================
+
+// A funcao individual e as duas funcoes de folgas continuam
+// exatamente como estavam. Esta opcao grava o mesmo intervalo
+// em todos os dias com expediente, exceto a folga semanal.
+
+static int lerNumeroIntervaloSemanal(
+    const char *mensagem, int *valor) {
+
+    int caractere;
+
+    printf("%s", mensagem);
+    int resultado = scanf("%d", valor);
+
+    // Descarta o restante da linha, inclusive entradas invalidas.
+    while ((caractere = getchar()) != '\n' && caractere != EOF) {
+    }
+
+    if (resultado != 1) {
+
+        printf("Digite apenas numeros!\n");
+        return 0;
+    }
+
+    return 1;
+}
+
+
+static void configurarIntervalosSemana(void) {
+
+    const char *nomesDias[] = {
+        "", "Segunda-feira", "Terca-feira", "Quarta-feira",
+        "Quinta-feira", "Sexta-feira", "Sabado", "Domingo"
+    };
+
+    const char *arquivoOriginal = "intervalos.dat";
+    const char *arquivoTemporario = "intervalos_semanal_temp.dat";
+    const char *arquivoBackup = "intervalos_semanal_backup.dat";
+
+    int horaInicio, horaFim, confirmar;
+    int diaFolga = 0;
+    int diasComExpediente[8] = {0};
+    int quantidade = 0;
+
+    struct HorarioBarbeiro horarios[8] = {0};
+    struct IntervaloBarbeiro novosIntervalos[8] = {0};
+
+    FILE *arquivo;
+
+    printf("\n===== CONFIGURAR INTERVALOS SEMANAL =====\n");
+
+    if (!lerNumeroIntervaloSemanal(
+            "Digite a hora de inicio: ", &horaInicio) ||
+        !lerNumeroIntervaloSemanal(
+            "Digite a hora de termino: ", &horaFim)) {
+        return;
+    }
+
+    if (horaInicio < 0 || horaInicio > 23 ||
+        horaFim < 0 || horaFim > 23 ||
+        horaFim <= horaInicio) {
+
+        printf("Intervalo invalido! O termino deve ser maior que o inicio.\n");
+        return;
+    }
+
+    // ========================================================
+    // 1. CONSULTAR A FOLGA SEMANAL
+    // ========================================================
+
+    arquivo = fopen("folga_semanal.dat", "rb");
+
+    if (arquivo != NULL) {
+
+        int leu = fread(
+            &diaFolga,
+            sizeof(int),
+            1,
+            arquivo
+        );
+
+        int erro = ferror(arquivo);
+
+        if (fclose(arquivo) != 0) {
+            erro = 1;
+        }
+
+        if (leu != 1 || erro ||
+            diaFolga < 1 || diaFolga > 7) {
+
+            printf("Erro ao consultar a folga semanal!\n");
+            return;
+        }
+
+    } else if (errno != ENOENT) {
+
+        perror("Erro ao abrir a folga semanal");
+        return;
+    }
+
+    // ========================================================
+    // 2. CONSULTAR OS HORARIOS DE TRABALHO
+    // ========================================================
+
+    // Cada dia pode possuir um expediente diferente.
+
+    arquivo = fopen("horario.dat", "rb");
+
+    if (arquivo == NULL) {
+
+        perror("Erro ao abrir os horarios de trabalho");
+        return;
+    }
+
+    struct HorarioBarbeiro horario;
+
+    while (fread(&horario,
+                 sizeof(horario),
+                 1,
+                 arquivo) == 1) {
+
+        if (horario.dia < 1 || horario.dia > 7) {
+
+            printf("Dia invalido encontrado em horario.dat!\n");
+            fclose(arquivo);
+            return;
+        }
+
+        horarios[horario.dia] = horario;
+        diasComExpediente[horario.dia] = 1;
+    }
+
+    int erroLeitura = ferror(arquivo);
+
+    if (fclose(arquivo) != 0) {
+        erroLeitura = 1;
+    }
+
+    if (erroLeitura) {
+
+        printf("Erro ao ler os horarios de trabalho!\n");
+        return;
+    }
+
+    // ========================================================
+    // 3. VALIDAR TODOS OS DIAS ANTES DE GRAVAR
+    // ========================================================
+
+    printf("\n===== CONFERINDO A SEMANA =====\n");
+
+    for (int dia = 1; dia <= 7; dia++) {
+
+        // Ignora a folga semanal
+        if (dia == diaFolga) {
+
+            printf("%s: FOLGA SEMANAL\n", nomesDias[dia]);
+            continue;
+        }
+
+        // Ignora dias sem expediente
+        if (!diasComExpediente[dia]) {
+
+            printf("%s: SEM EXPEDIENTE\n", nomesDias[dia]);
+            continue;
+        }
+
+        // Verifica se o intervalo cabe no expediente
+        if (horaInicio < horarios[dia].horaInicio ||
+            horaFim > horarios[dia].horaFim) {
+
+            printf("Intervalo fora do expediente de %s (%02d:00 as %02d:00)!\n",
+                   nomesDias[dia],
+                   horarios[dia].horaInicio,
+                   horarios[dia].horaFim);
+
+            printf("Nenhum intervalo foi alterado.\n");
+            return;
+        }
+
+        // Verifica conflitos com agendamentos futuros
+        int conflito = verificarConflitoAgendamentoIntervalo(
+            dia, horaInicio, horaFim
+        );
+
+        if (conflito != 0) {
+
+            printf("Nao foi possivel configurar %s: conflito ou erro.\n",
+                   nomesDias[dia]);
+
+            printf("Nenhum intervalo foi alterado.\n");
+            return;
+        }
+
+        // Prepara o novo registro do dia
+        novosIntervalos[dia].dia = dia;
+        novosIntervalos[dia].horaInicio = horaInicio;
+        novosIntervalos[dia].horaFim = horaFim;
+
+        quantidade++;
+
+        printf("%s: %02d:00 as %02d:00\n",
+               nomesDias[dia], horaInicio, horaFim);
+    }
+
+    if (quantidade == 0) {
+
+        printf("Nenhum dia de trabalho disponivel!\n");
+        return;
+    }
+
+    // ========================================================
+    // 4. CONFIRMAR CONFIGURACAO SEMANAL
+    // ========================================================
+
+    printf("\nSerao configurados %d dias.\n", quantidade);
+    printf("Os intervalos antigos serao substituidos por estes.\n");
+    printf("1 - Confirmar\n");
+    printf("2 - Cancelar\n");
+
+    if (!lerNumeroIntervaloSemanal(
+            "Escolha: ", &confirmar) || confirmar != 1) {
+
+        printf("Operacao cancelada!\n");
+        return;
+    }
+
+    // ========================================================
+    // 5. VERIFICAR BACKUP E TEMPORARIO
+    // ========================================================
+
+    arquivo = fopen(arquivoBackup, "rb");
+
+    if (arquivo != NULL) {
+
+        fclose(arquivo);
+        printf("Existe um backup de intervalos pendente!\n");
+        return;
+    }
+
+    if (errno != ENOENT) {
+
+        perror("Erro ao verificar backup");
+        return;
+    }
+
+    arquivo = fopen(arquivoTemporario, "rb");
+
+    if (arquivo != NULL) {
+
+        fclose(arquivo);
+        printf("Existe um arquivo temporario pendente!\n");
+        return;
+    }
+
+    if (errno != ENOENT) {
+
+        perror("Erro ao verificar temporario");
+        return;
+    }
+
+    int existeOriginal = 0;
+
+    arquivo = fopen(arquivoOriginal, "rb");
+
+    if (arquivo != NULL) {
+
+        existeOriginal = 1;
+
+        if (fclose(arquivo) != 0) {
+
+            printf("Erro ao verificar intervalos antigos!\n");
+            return;
+        }
+
+    } else if (errno != ENOENT) {
+
+        perror("Erro ao abrir intervalos antigos");
+        return;
+    }
+
+    // ========================================================
+    // 6. CRIAR ARQUIVO TEMPORARIO
+    // ========================================================
+
+    arquivo = fopen(arquivoTemporario, "wb");
+
+    if (arquivo == NULL) {
+
+        perror("Erro ao criar intervalos temporarios");
+        return;
+    }
+
+    int erroGravacao = 0;
+
+    for (int dia = 1; dia <= 7; dia++) {
+
+        if (diasComExpediente[dia] &&
+            dia != diaFolga) {
+
+            if (fwrite(&novosIntervalos[dia],
+                       sizeof(struct IntervaloBarbeiro),
+                       1,
+                       arquivo) != 1) {
+
+                erroGravacao = 1;
+                break;
+            }
+        }
+    }
+
+    if (fclose(arquivo) != 0) {
+        erroGravacao = 1;
+    }
+
+    if (erroGravacao) {
+
+        printf("Erro ao preparar novos intervalos!\n");
+        remove(arquivoTemporario);
+        return;
+    }
+
+    // ========================================================
+    // 7. SUBSTITUIR ARQUIVO ANTIGO
+    // ========================================================
+
+    if (existeOriginal &&
+        rename(arquivoOriginal, arquivoBackup) != 0) {
+
+        perror("Erro ao criar backup de intervalos");
+        remove(arquivoTemporario);
+        return;
+    }
+
+    if (rename(arquivoTemporario, arquivoOriginal) != 0) {
+
+        perror("Erro ao salvar novos intervalos");
+
+        // Tenta restaurar os intervalos anteriores
+        if (existeOriginal &&
+            rename(arquivoBackup, arquivoOriginal) != 0) {
+
+            printf("ATENCAO: restaure intervalos.dat pelo backup!\n");
+        }
+
+        return;
+    }
+
+    // ========================================================
+    // 8. REMOVER BACKUP APOS SALVAR
+    // ========================================================
+
+    if (existeOriginal &&
+        remove(arquivoBackup) != 0) {
+
+        printf("Aviso: nao foi possivel remover o backup.\n");
+    }
+
+    printf("\nIntervalos semanais configurados com sucesso!\n");
+    printf("Intervalo: %02d:00 as %02d:00\n",
+           horaInicio, horaFim);
+    printf("Dias atualizados: %d\n", quantidade);
 }

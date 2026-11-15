@@ -725,7 +725,7 @@ void agendarHorario(int idCliente) {
         // Intervalos cadastrados
         } else if (horariosIntervalo[i] == 1) {
 
-            printf("%02d:00 - INTERVALO DO BARBEIRO\n", i);
+            printf("%02d:00 - INDISPONIVEL\n", i);
 
         } else {
 
