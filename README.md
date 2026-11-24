@@ -24,9 +24,6 @@ O projeto está dividido em etapas, sendo cada etapa organizada em um diretório
 6. fazer o versionamento do Codigo em C estruturado.
 7. fazer o versionamsnfo do codigo SQL.
 
-## README.
-
-[readme-backlog](./README BACKLOG.MD/)
 
 ## Ferramentas e Tecnologias
 
