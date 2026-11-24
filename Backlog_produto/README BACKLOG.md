@@ -45,7 +45,7 @@ Este diretório serve como forma de documentar detalhadamente sobre o Backlog do
 | RF03 | VISUALIZAR HISTÓRICO DE SERVIÇOS REALIZADOS/AGENDADOS |
 | --- | --- |
 |	**T1** | mostrar informações sobre quais serviços foram realizados. |
-|	**T2 ** |mostrar horário em que foi realizado. |
+|	**T2** |mostrar horário em que foi realizado. |
 |	**T3** | mostrar informações de quem realizou o serviço.|
 | **T4** |mostrar informações sobre o cliente. |
 | **T5** |mostrar status do agendamento (não realizado ou realizado) |
